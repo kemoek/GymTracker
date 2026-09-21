@@ -61,7 +61,7 @@ export default function FriendsPage() {
           <TabsTrigger value="requests" className="flex-1 relative">
             {t.friends.tabs.requests}
             {requests && requests.length > 0 && (
-              <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+              <span className="ml-1.5 inline-flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs font-bold animate-pulse shadow-sm">
                 {requests.length}
               </span>
             )}

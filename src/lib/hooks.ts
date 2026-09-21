@@ -200,6 +200,7 @@ export function useFriendRequests() {
     queryKey: ['friendRequests'],
     queryFn: () => apiFetch<FriendRequest[]>('/api/friends/requests'),
     enabled: status === 'authenticated',
+    refetchInterval: 15000,
   });
 }
 

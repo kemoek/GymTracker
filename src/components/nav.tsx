@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
-import { useProfile } from '@/lib/hooks';
+import { useProfile, useFriendRequests } from '@/lib/hooks';
 import { useLanguage } from '@/lib/i18n';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -22,13 +22,16 @@ import {
 export function Nav() {
   const pathname = usePathname();
   const { data: profile } = useProfile();
+  const { data: requests } = useFriendRequests();
   const { t } = useLanguage();
+
+  const pendingRequestsCount = requests?.length || 0;
 
   const navItems = [
     { href: '/dashboard', label: t.nav.home, icon: LayoutDashboard },
     { href: '/calendar', label: t.nav.calendar, icon: Calendar },
     { href: '/statistics', label: t.nav.statistics, icon: BarChart3 },
-    { href: '/friends', label: t.nav.friends, icon: Users },
+    { href: '/friends', label: t.nav.friends, icon: Users, badge: pendingRequestsCount },
     { href: '/profile', label: t.nav.profile, icon: User },
   ];
 
@@ -51,14 +54,19 @@ export function Nav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors relative',
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )}
               >
-                <item.icon className="h-5 w-5" />
-                {item.label}
+                <item.icon className="h-5 w-5 shrink-0" />
+                <span className="flex-1">{item.label}</span>
+                {item.badge && item.badge > 0 ? (
+                  <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-bold rounded-full bg-destructive text-destructive-foreground animate-pulse shadow-sm">
+                    {item.badge}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
@@ -91,7 +99,18 @@ export function Nav() {
           <Dumbbell className="h-5 w-5 text-primary" />
           <span className="font-bold text-base">GymTracker</span>
         </div>
-        <LanguageSwitcher />
+        <div className="flex items-center gap-2">
+          {pendingRequestsCount > 0 && (
+            <Link
+              href="/friends"
+              className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full bg-destructive text-destructive-foreground animate-pulse"
+            >
+              <Users className="h-3 w-3" />
+              <span>{pendingRequestsCount}</span>
+            </Link>
+          )}
+          <LanguageSwitcher />
+        </div>
       </header>
 
       {/* Mobile Bottom Nav */}
@@ -104,14 +123,21 @@ export function Nav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors',
+                  'flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors relative',
                   isActive
                     ? 'text-primary'
                     : 'text-muted-foreground'
                 )}
               >
-                <item.icon className="h-5 w-5" />
-                {item.label}
+                <div className="relative">
+                  <item.icon className="h-5 w-5" />
+                  {item.badge && item.badge > 0 ? (
+                    <span className="absolute -top-1.5 -right-2.5 inline-flex items-center justify-center h-4 min-w-4 px-1 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground animate-pulse shadow">
+                      {item.badge}
+                    </span>
+                  ) : null}
+                </div>
+                <span>{item.label}</span>
               </Link>
             );
           })}

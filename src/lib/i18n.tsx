@@ -23,7 +23,7 @@ export const translations = {
       username: 'Kullanıcı Adı',
       email: 'E-posta',
       usernameOrEmail: 'Kullanıcı Adı veya E-posta',
-      usernameOrEmailPlaceholder: 'kemal veya ornek@email.com',
+      usernameOrEmailPlaceholder: 'Username / sample@email.com',
       password: 'Şifre',
       confirmPassword: 'Şifreyi Onayla',
       signInBtn: 'Giriş Yap',
