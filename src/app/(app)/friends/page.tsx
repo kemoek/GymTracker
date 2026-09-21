@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   useFriends,
   useFriendRequests,
@@ -92,26 +93,28 @@ export default function FriendsPage() {
               ) : (
                 <div className="space-y-3">
                   {friends.map((friend) => (
-                    <div key={friend.friendshipId} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>{friend.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{friend.user.username}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {friend.workoutsThisWeek} {t.dashboard.workouts} {t.friends.workoutsThisWeek}
-                          {friend.lastWorkout && (
-                            <> • {t.friends.lastPrefix}: {formatRelativeDate(friend.lastWorkout.date)}</>
-                          )}
-                        </p>
-                        {friend.lastWorkout && (
+                    <div key={friend.friendshipId} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-accent/40 transition-colors">
+                      <Link href={`/users/${friend.user.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>{friend.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold hover:text-primary transition-colors">{friend.user.username}</p>
                           <p className="text-xs text-muted-foreground">
-                            {friend.lastWorkout.muscleGroups
-                              .map((mg) => getMuscleGroupLabel(mg as MuscleGroup))
-                              .join(' + ')}
+                            {friend.workoutsThisWeek} {t.dashboard.workouts} {t.friends.workoutsThisWeek}
+                            {friend.lastWorkout && (
+                              <> • {t.friends.lastPrefix}: {formatRelativeDate(friend.lastWorkout.date)}</>
+                            )}
                           </p>
-                        )}
-                      </div>
+                          {friend.lastWorkout && (
+                            <p className="text-xs text-muted-foreground">
+                              {friend.lastWorkout.muscleGroups
+                                .map((mg) => getMuscleGroupLabel(mg as MuscleGroup))
+                                .join(' + ')}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -147,13 +150,15 @@ export default function FriendsPage() {
                 <div className="space-y-3">
                   {requests.map((req) => (
                     <div key={req.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>{req.requester.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{req.requester.username}</p>
-                        <p className="text-xs text-muted-foreground">{t.friends.wantsToBeFriend}</p>
-                      </div>
+                      <Link href={`/users/${req.requester.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>{req.requester.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium hover:text-primary transition-colors">{req.requester.username}</p>
+                          <p className="text-xs text-muted-foreground">{t.friends.wantsToBeFriend}</p>
+                        </div>
+                      </Link>
                       <div className="flex gap-2 shrink-0">
                         <Button
                           size="sm"
@@ -198,7 +203,11 @@ export default function FriendsPage() {
               ) : (
                 <div className="space-y-3">
                   {comparison.map((item, index) => (
-                    <div key={item.user.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <Link
+                      key={item.user.id}
+                      href={`/users/${item.user.id}`}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-accent/40 transition-colors cursor-pointer"
+                    >
                       <span className="text-lg font-bold text-muted-foreground w-6 text-center">
                         {index + 1}
                       </span>
@@ -206,7 +215,7 @@ export default function FriendsPage() {
                         <AvatarFallback>{item.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{item.user.username}</p>
+                        <p className="text-sm font-medium hover:text-primary transition-colors">{item.user.username}</p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold">{item.weeklyCount}</p>
@@ -216,7 +225,7 @@ export default function FriendsPage() {
                         <p className="text-sm font-bold">{item.monthlyCount}</p>
                         <p className="text-xs text-muted-foreground">{t.friends.thisMonth}</p>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -262,12 +271,14 @@ export default function FriendsPage() {
                 <div className="space-y-2">
                   {searchResults.map((user) => (
                     <div key={user.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{user.username}</p>
-                      </div>
+                      <Link href={`/users/${user.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium hover:text-primary transition-colors">{user.username}</p>
+                        </div>
+                      </Link>
                       <Button
                         size="sm"
                         onClick={() => handleSendRequest(user.username)}

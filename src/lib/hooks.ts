@@ -287,3 +287,42 @@ export function useSearchUsers(query: string) {
     enabled: query.length >= 2,
   });
 }
+
+export interface UserProfileDetail {
+  user: {
+    id: string;
+    username: string;
+    avatarUrl: string | null;
+    weeklyGoal: number;
+    createdAt: string;
+  };
+  isSelf: boolean;
+  isFriend: boolean;
+  friendshipStatus: 'NONE' | 'PENDING' | 'ACCEPTED';
+  statistics: {
+    totalWorkouts: number;
+    workoutsThisWeek: number;
+    workoutsThisMonth: number;
+    activeDaysThisWeek: number;
+    currentStreak: number;
+    longestStreak: number;
+    avgPerWeek: number;
+    muscleGroupDistribution: { muscleGroup: string; count: number; percentage: number }[];
+    heatmapData: { date: string; count: number }[];
+    recentWorkouts: {
+      id: string;
+      date: string;
+      note: string | null;
+      muscleGroups: string[];
+    }[];
+  };
+}
+
+export function useUserProfile(id: string) {
+  const { status } = useSession();
+  return useQuery({
+    queryKey: ['userProfile', id],
+    queryFn: () => apiFetch<UserProfileDetail>(`/api/users/${id}`),
+    enabled: status === 'authenticated' && !!id,
+  });
+}

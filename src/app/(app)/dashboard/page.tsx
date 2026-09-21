@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useStatistics, useFriendActivity, useWorkouts, useProfile } from '@/lib/hooks';
 import { useLanguage } from '@/lib/i18n';
 import { type MuscleGroup } from '@/lib/validations';
@@ -161,7 +162,11 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {friendActivity.slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                  <Link
+                    key={activity.id}
+                    href={`/users/${activity.user.id}`}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-accent/40 transition-colors cursor-pointer"
+                  >
                     <Avatar className="h-9 w-9">
                       <AvatarFallback className="text-xs">
                         {activity.user.username.slice(0, 2).toUpperCase()}
@@ -169,7 +174,7 @@ export default function DashboardPage() {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm">
-                        <span className="font-medium">{activity.user.username}</span>{' '}
+                        <span className="font-semibold hover:text-primary transition-colors">{activity.user.username}</span>{' '}
                         {t.dashboard.completedWorkout}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -177,7 +182,7 @@ export default function DashboardPage() {
                         {activity.muscleGroups.map((mg) => getMuscleGroupLabel(mg as MuscleGroup)).join(' + ')}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
