@@ -1,8 +1,8 @@
 'use client';
 
 import { useStatistics } from '@/lib/hooks';
-import { MUSCLE_GROUP_LABELS, type MuscleGroup } from '@/lib/validations';
-import { formatRelativeDate } from '@/lib/utils';
+import { type MuscleGroup } from '@/lib/validations';
+import { useLanguage } from '@/lib/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -40,11 +40,12 @@ const CHART_COLORS = [
 
 export default function StatisticsPage() {
   const { data: stats, isLoading } = useStatistics();
+  const { t, formatRelativeDate, getMuscleGroupLabel } = useLanguage();
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-muted-foreground">Loading statistics...</p>
+        <p className="text-muted-foreground">{t.statistics.loading}</p>
       </div>
     );
   }
@@ -52,25 +53,25 @@ export default function StatisticsPage() {
   if (!stats) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-muted-foreground">No statistics available yet.</p>
+        <p className="text-muted-foreground">{t.statistics.noStats}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Statistics</h1>
+      <h1 className="text-2xl font-bold">{t.statistics.title}</h1>
 
       {/* General Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={Dumbbell} label="Total Workouts" value={stats.totalWorkouts} />
-        <StatCard icon={Calendar} label="This Week" value={stats.workoutsThisWeek} />
-        <StatCard icon={TrendingUp} label="This Month" value={stats.workoutsThisMonth} />
-        <StatCard icon={Activity} label="Avg / Week" value={stats.avgPerWeek} />
-        <StatCard icon={Flame} label="Current Streak" value={`${stats.currentStreak}d`} highlight />
-        <StatCard icon={Trophy} label="Longest Streak" value={`${stats.longestStreak}d`} />
-        <StatCard icon={Calendar} label="Last 7 Days" value={stats.workoutsLast7Days} />
-        <StatCard icon={Calendar} label="Last 30 Days" value={stats.workoutsLast30Days} />
+        <StatCard icon={Dumbbell} label={t.statistics.totalWorkouts} value={stats.totalWorkouts} />
+        <StatCard icon={Calendar} label={t.statistics.thisWeek} value={stats.workoutsThisWeek} />
+        <StatCard icon={TrendingUp} label={t.statistics.thisMonth} value={stats.workoutsThisMonth} />
+        <StatCard icon={Activity} label={t.statistics.avgPerWeek} value={stats.avgPerWeek} />
+        <StatCard icon={Flame} label={t.statistics.currentStreak} value={`${stats.currentStreak} ${t.dashboard.days}`} highlight />
+        <StatCard icon={Trophy} label={t.statistics.longestStreak} value={`${stats.longestStreak} ${t.dashboard.days}`} />
+        <StatCard icon={Calendar} label={t.statistics.last7Days} value={stats.workoutsLast7Days} />
+        <StatCard icon={Calendar} label={t.statistics.last30Days} value={stats.workoutsLast30Days} />
       </div>
 
       {/* Charts */}
@@ -78,7 +79,7 @@ export default function StatisticsPage() {
         {/* Weekly Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Weekly Workouts</CardTitle>
+            <CardTitle className="text-base">{t.statistics.weeklyChartTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">
@@ -97,7 +98,7 @@ export default function StatisticsPage() {
         {/* Monthly Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Monthly Workouts</CardTitle>
+            <CardTitle className="text-base">{t.statistics.monthlyChartTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">
@@ -118,7 +119,7 @@ export default function StatisticsPage() {
       {stats.muscleGroupDistribution.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Muscle Group Distribution</CardTitle>
+            <CardTitle className="text-base">{t.statistics.muscleDistributionTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-6">
@@ -127,7 +128,7 @@ export default function StatisticsPage() {
                   <PieChart>
                     <Pie
                       data={stats.muscleGroupDistribution.map((mg) => ({
-                        name: MUSCLE_GROUP_LABELS[mg.muscleGroup as MuscleGroup] || mg.muscleGroup,
+                        name: getMuscleGroupLabel(mg.muscleGroup as MuscleGroup),
                         value: mg.count,
                       }))}
                       cx="50%"
@@ -152,7 +153,7 @@ export default function StatisticsPage() {
                       style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
                     />
                     <span className="text-sm flex-1">
-                      {MUSCLE_GROUP_LABELS[mg.muscleGroup as MuscleGroup] || mg.muscleGroup}
+                      {getMuscleGroupLabel(mg.muscleGroup as MuscleGroup)}
                     </span>
                     <span className="text-sm font-medium">{mg.percentage}%</span>
                     <span className="text-xs text-muted-foreground">({mg.count})</span>
@@ -168,7 +169,7 @@ export default function StatisticsPage() {
       {stats.heatmapData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Activity Heatmap</CardTitle>
+            <CardTitle className="text-base">{t.statistics.activityHeatmapTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -187,18 +188,18 @@ export default function StatisticsPage() {
                       />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>{formatRelativeDate(day.date)}: {day.count} workout{day.count !== 1 ? 's' : ''}</p>
+                      <p>{formatRelativeDate(day.date)}: {day.count} {t.statistics.workoutsCount}</p>
                     </TooltipContent>
                   </Tooltip>
                 ))}
               </div>
               <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-                <span>Less</span>
+                <span>{t.statistics.less}</span>
                 <div className="h-3 w-3 rounded-sm bg-muted" />
                 <div className="h-3 w-3 rounded-sm bg-primary/30" />
                 <div className="h-3 w-3 rounded-sm bg-primary/60" />
                 <div className="h-3 w-3 rounded-sm bg-primary" />
-                <span>More</span>
+                <span>{t.statistics.more}</span>
               </div>
             </div>
           </CardContent>

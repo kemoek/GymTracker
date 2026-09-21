@@ -5,8 +5,10 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/lib/hooks';
+import { useLanguage } from '@/lib/i18n';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import {
   LayoutDashboard,
   Calendar,
@@ -17,25 +19,29 @@ import {
   Dumbbell,
 } from 'lucide-react';
 
-const navItems = [
-  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/calendar', label: 'Calendar', icon: Calendar },
-  { href: '/statistics', label: 'Statistics', icon: BarChart3 },
-  { href: '/friends', label: 'Friends', icon: Users },
-  { href: '/profile', label: 'Profile', icon: User },
-];
-
 export function Nav() {
   const pathname = usePathname();
   const { data: profile } = useProfile();
+  const { t } = useLanguage();
+
+  const navItems = [
+    { href: '/dashboard', label: t.nav.home, icon: LayoutDashboard },
+    { href: '/calendar', label: t.nav.calendar, icon: Calendar },
+    { href: '/statistics', label: t.nav.statistics, icon: BarChart3 },
+    { href: '/friends', label: t.nav.friends, icon: Users },
+    { href: '/profile', label: t.nav.profile, icon: User },
+  ];
 
   return (
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-border bg-card">
-        <div className="flex h-16 items-center gap-2 px-6 border-b border-border">
-          <Dumbbell className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold">GymTracker</span>
+        <div className="flex h-16 items-center justify-between px-6 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Dumbbell className="h-6 w-6 text-primary" />
+            <span className="text-lg font-bold">GymTracker</span>
+          </div>
+          <LanguageSwitcher />
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map((item) => {
@@ -71,13 +77,22 @@ export function Nav() {
               variant="ghost"
               size="icon"
               onClick={() => signOut({ callbackUrl: '/login' })}
-              title="Sign out"
+              title={t.nav.signOut}
             >
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </aside>
+
+      {/* Mobile Top Bar */}
+      <header className="md:hidden flex items-center justify-between h-14 px-4 border-b border-border bg-card sticky top-0 z-40">
+        <div className="flex items-center gap-2">
+          <Dumbbell className="h-5 w-5 text-primary" />
+          <span className="font-bold text-base">GymTracker</span>
+        </div>
+        <LanguageSwitcher />
+      </header>
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">

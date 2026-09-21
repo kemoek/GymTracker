@@ -2,15 +2,14 @@
 
 import { useState, useMemo } from 'react';
 import { useWorkouts, useDeleteWorkout, type Workout } from '@/lib/hooks';
-import { formatDate, getDateString } from '@/lib/utils';
-import { MUSCLE_GROUP_LABELS, type MuscleGroup } from '@/lib/validations';
+import { getDateString } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n';
+import { type MuscleGroup } from '@/lib/validations';
 import { WorkoutDialog } from '@/components/workout-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Plus, Dumbbell, Pencil, Trash2 } from 'lucide-react';
-
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -18,6 +17,7 @@ export default function CalendarPage() {
   const [workoutDialogOpen, setWorkoutDialogOpen] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
   const deleteWorkout = useDeleteWorkout();
+  const { t, locale, formatDate, getMuscleGroupLabel } = useLanguage();
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -86,10 +86,13 @@ export default function CalendarPage() {
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
   const goToToday = () => setCurrentDate(new Date());
 
-  const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthName = currentDate.toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
 
   const handleDeleteWorkout = async (id: string) => {
-    if (confirm('Are you sure you want to delete this workout?')) {
+    if (confirm(t.calendar.confirmDelete)) {
       await deleteWorkout.mutateAsync(id);
     }
   };
@@ -97,10 +100,10 @@ export default function CalendarPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Calendar</h1>
+        <h1 className="text-2xl font-bold">{t.calendar.title}</h1>
         <Button onClick={() => { setEditingWorkout(null); setWorkoutDialogOpen(true); }} className="gap-2">
           <Plus className="h-4 w-4" />
-          Add Workout
+          {t.calendar.addWorkout}
         </Button>
       </div>
 
@@ -111,9 +114,11 @@ export default function CalendarPage() {
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-3">
-              <CardTitle className="text-lg">{monthName}</CardTitle>
+              <CardTitle className="text-lg capitalize">{monthName}</CardTitle>
               {monthStr !== getDateString(new Date()).slice(0, 7) && (
-                <Button variant="outline" size="sm" onClick={goToToday}>Today</Button>
+                <Button variant="outline" size="sm" onClick={goToToday}>
+                  {t.calendar.today}
+                </Button>
               )}
             </div>
             <Button variant="ghost" size="icon" onClick={nextMonth}>
@@ -124,13 +129,13 @@ export default function CalendarPage() {
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
-              <p className="text-muted-foreground">Loading...</p>
+              <p className="text-muted-foreground">{t.calendar.loading}</p>
             </div>
           ) : (
             <>
               {/* Day headers */}
               <div className="grid grid-cols-7 gap-1 mb-1">
-                {DAY_NAMES.map((day) => (
+                {t.calendar.daysOfWeek.map((day) => (
                   <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
                     {day}
                   </div>
@@ -188,14 +193,14 @@ export default function CalendarPage() {
                 className="gap-1"
               >
                 <Plus className="h-3 w-3" />
-                Add
+                {t.calendar.addBtn}
               </Button>
             </div>
           </CardHeader>
           <CardContent>
             {selectedDateWorkouts.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No workouts on this day.
+                {t.calendar.noWorkoutsOnDay}
               </p>
             ) : (
               <div className="space-y-3">
@@ -207,7 +212,7 @@ export default function CalendarPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">
                         {workout.muscleGroups
-                          .map((mg) => MUSCLE_GROUP_LABELS[mg as MuscleGroup] || mg)
+                          .map((mg) => getMuscleGroupLabel(mg as MuscleGroup))
                           .join(' + ')}
                       </p>
                       {workout.note && (
@@ -223,6 +228,7 @@ export default function CalendarPage() {
                           setEditingWorkout(workout);
                           setWorkoutDialogOpen(true);
                         }}
+                        title={t.calendar.editBtn}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -231,6 +237,7 @@ export default function CalendarPage() {
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => handleDeleteWorkout(workout.id)}
+                        title={t.calendar.deleteBtn}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

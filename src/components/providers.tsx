@@ -6,6 +6,8 @@ import { ThemeProvider } from 'next-themes';
 import { useState } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
+import { LanguageProvider } from '@/lib/i18n';
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -23,9 +25,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <TooltipProvider>
-            {children}
-          </TooltipProvider>
+          <LanguageProvider>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </SessionProvider>

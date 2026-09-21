@@ -5,13 +5,14 @@ import { signOut } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useProfile, useUpdateProfile, useChangePassword, useUpdateGoal } from '@/lib/hooks';
+import { useLanguage, Locale } from '@/lib/i18n';
 import { updateProfileSchema, changePasswordSchema } from '@/lib/validations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, Lock, Target, LogOut, Calendar, Dumbbell } from 'lucide-react';
+import { User, Lock, Target, LogOut, Calendar, Dumbbell, Globe } from 'lucide-react';
 import { z } from 'zod';
 
 type ProfileForm = z.infer<typeof updateProfileSchema>;
@@ -22,6 +23,7 @@ export default function ProfilePage() {
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
   const updateGoal = useUpdateGoal();
+  const { t, locale, setLocale } = useLanguage();
 
   const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
   const [passwordMsg, setPasswordMsg] = useState({ type: '', text: '' });
@@ -39,9 +41,9 @@ export default function ProfilePage() {
     setProfileMsg({ type: '', text: '' });
     try {
       await updateProfile.mutateAsync(data);
-      setProfileMsg({ type: 'success', text: 'Profile updated successfully' });
+      setProfileMsg({ type: 'success', text: t.profile.profileUpdated });
     } catch (err) {
-      setProfileMsg({ type: 'error', text: err instanceof Error ? err.message : 'Failed to update profile' });
+      setProfileMsg({ type: 'error', text: err instanceof Error ? err.message : t.auth.unexpectedError });
     }
   };
 
@@ -49,10 +51,10 @@ export default function ProfilePage() {
     setPasswordMsg({ type: '', text: '' });
     try {
       await changePassword.mutateAsync(data);
-      setPasswordMsg({ type: 'success', text: 'Password changed successfully' });
+      setPasswordMsg({ type: 'success', text: t.profile.passwordChanged });
       passwordForm.reset();
     } catch (err) {
-      setPasswordMsg({ type: 'error', text: err instanceof Error ? err.message : 'Failed to change password' });
+      setPasswordMsg({ type: 'error', text: err instanceof Error ? err.message : t.auth.unexpectedError });
     }
   };
 
@@ -66,14 +68,14 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-muted-foreground">Loading profile...</p>
+        <p className="text-muted-foreground">{t.friends.loading}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Profile</h1>
+      <h1 className="text-2xl font-bold">{t.profile.title}</h1>
 
       {/* Profile Overview */}
       <Card>
@@ -90,14 +92,51 @@ export default function ProfilePage() {
               <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" />
-                  Joined {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—'}
+                  {t.profile.joined}{' '}
+                  {profile?.createdAt
+                    ? new Date(profile.createdAt).toLocaleDateString(
+                        locale === 'tr' ? 'tr-TR' : 'en-US',
+                        { month: 'long', year: 'numeric' }
+                      )
+                    : '—'}
                 </span>
                 <span className="flex items-center gap-1">
                   <Dumbbell className="h-3.5 w-3.5" />
-                  {profile?.workoutCount || 0} workouts
+                  {profile?.workoutCount || 0} {t.profile.workouts}
                 </span>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Language Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            {t.profile.language}
+          </CardTitle>
+          <CardDescription>{t.profile.languageDesc}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant={locale === 'tr' ? 'default' : 'outline'}
+              onClick={() => setLocale('tr')}
+              className="gap-2"
+            >
+              🇹🇷 Türkçe
+            </Button>
+            <Button
+              type="button"
+              variant={locale === 'en' ? 'default' : 'outline'}
+              onClick={() => setLocale('en')}
+              className="gap-2"
+            >
+              🇬🇧 English
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -107,7 +146,7 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <User className="h-4 w-4" />
-            Edit Profile
+            {t.profile.editProfile}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -118,7 +157,7 @@ export default function ProfilePage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">{t.profile.username}</Label>
               <Input
                 id="username"
                 defaultValue={profile?.username}
@@ -129,7 +168,7 @@ export default function ProfilePage() {
               )}
             </div>
             <Button type="submit" disabled={updateProfile.isPending}>
-              {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
+              {updateProfile.isPending ? t.profile.saving : t.profile.saveChanges}
             </Button>
           </form>
         </CardContent>
@@ -140,9 +179,9 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Target className="h-4 w-4" />
-            Weekly Goal
+            {t.profile.weeklyGoal}
           </CardTitle>
-          <CardDescription>Set your weekly workout target (1-7)</CardDescription>
+          <CardDescription>{t.profile.goalDescription}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3">
@@ -154,13 +193,13 @@ export default function ProfilePage() {
               onChange={(e) => setGoalValue(parseInt(e.target.value))}
               className="w-24"
             />
-            <span className="text-sm text-muted-foreground">workouts per week</span>
+            <span className="text-sm text-muted-foreground">{t.profile.workoutsPerWeek}</span>
             <Button
               onClick={handleGoalUpdate}
               disabled={updateGoal.isPending || goalValue === null}
               size="sm"
             >
-              {updateGoal.isPending ? 'Saving...' : 'Update'}
+              {updateGoal.isPending ? t.profile.saving : t.profile.update}
             </Button>
           </div>
         </CardContent>
@@ -171,7 +210,7 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Lock className="h-4 w-4" />
-            Change Password
+            {t.profile.changePassword}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -182,7 +221,7 @@ export default function ProfilePage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="currentPassword">Current Password</Label>
+              <Label htmlFor="currentPassword">{t.profile.currentPassword}</Label>
               <Input
                 id="currentPassword"
                 type="password"
@@ -193,7 +232,7 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
+              <Label htmlFor="newPassword">{t.profile.newPassword}</Label>
               <Input
                 id="newPassword"
                 type="password"
@@ -204,7 +243,7 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+              <Label htmlFor="confirmNewPassword">{t.profile.confirmNewPassword}</Label>
               <Input
                 id="confirmNewPassword"
                 type="password"
@@ -215,7 +254,7 @@ export default function ProfilePage() {
               )}
             </div>
             <Button type="submit" disabled={changePassword.isPending}>
-              {changePassword.isPending ? 'Changing...' : 'Change Password'}
+              {changePassword.isPending ? t.profile.saving : t.profile.changePassword}
             </Button>
           </form>
         </CardContent>
@@ -230,7 +269,7 @@ export default function ProfilePage() {
             className="gap-2"
           >
             <LogOut className="h-4 w-4" />
-            Sign Out
+            {t.profile.signOut}
           </Button>
         </CardContent>
       </Card>

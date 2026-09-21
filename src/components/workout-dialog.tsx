@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { workoutSchema, MUSCLE_GROUPS, MUSCLE_GROUP_LABELS, type MuscleGroup } from '@/lib/validations';
+import { workoutSchema, MUSCLE_GROUPS, type MuscleGroup } from '@/lib/validations';
 import { useCreateWorkout, useUpdateWorkout, type Workout } from '@/lib/hooks';
 import { getTodayString } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +34,7 @@ interface WorkoutDialogProps {
 export function WorkoutDialog({ open, onOpenChange, workout, defaultDate }: WorkoutDialogProps) {
   const createWorkout = useCreateWorkout();
   const updateWorkout = useUpdateWorkout();
+  const { t, getMuscleGroupLabel } = useLanguage();
   const [error, setError] = useState('');
 
   const isEditing = !!workout;
@@ -96,9 +98,11 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate }: Work
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Workout' : 'Add Workout'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t.workoutDialog.editTitle : t.workoutDialog.addTitle}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Update your workout details.' : 'Record a new workout session.'}
+            {isEditing ? t.workoutDialog.editDesc : t.workoutDialog.addDesc}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -109,7 +113,7 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate }: Work
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
+            <Label htmlFor="date">{t.workoutDialog.date}</Label>
             <Input id="date" type="date" {...register('date')} />
             {errors.date && (
               <p className="text-sm text-destructive">{errors.date.message}</p>
@@ -117,7 +121,7 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate }: Work
           </div>
 
           <div className="space-y-2">
-            <Label>Muscle Groups</Label>
+            <Label>{t.workoutDialog.muscleGroups}</Label>
             <div className="grid grid-cols-2 gap-2">
               {MUSCLE_GROUPS.map((group) => (
                 <label
@@ -128,7 +132,7 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate }: Work
                     checked={(selectedMuscleGroups as string[]).includes(group)}
                     onCheckedChange={() => toggleMuscleGroup(group)}
                   />
-                  <span className="text-sm font-medium">{MUSCLE_GROUP_LABELS[group]}</span>
+                  <span className="text-sm font-medium">{getMuscleGroupLabel(group)}</span>
                 </label>
               ))}
             </div>
@@ -138,10 +142,10 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate }: Work
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="note">Note (optional)</Label>
+            <Label htmlFor="note">{t.workoutDialog.note}</Label>
             <Textarea
               id="note"
-              placeholder="How was your workout?"
+              placeholder={t.workoutDialog.notePlaceholder}
               {...register('note')}
             />
             {errors.note && (
@@ -151,10 +155,14 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate }: Work
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t.workoutDialog.cancel}
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Save Workout'}
+              {isLoading
+                ? t.workoutDialog.saving
+                : isEditing
+                ? t.workoutDialog.update
+                : t.workoutDialog.save}
             </Button>
           </DialogFooter>
         </form>
