@@ -74,7 +74,7 @@ describe('registerSchema', () => {
 });
 
 describe('loginSchema', () => {
-  it('accepts valid login data', () => {
+  it('accepts valid login data with email', () => {
     const result = loginSchema.safeParse({
       email: 'test@example.com',
       password: 'password123',
@@ -82,17 +82,32 @@ describe('loginSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('accepts valid login data with identifier (username)', () => {
+    const result = loginSchema.safeParse({
+      identifier: 'kemal',
+      password: 'password123',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts valid login data with identifier (email)', () => {
+    const result = loginSchema.safeParse({
+      identifier: 'test@example.com',
+      password: 'password123',
+    });
+    expect(result.success).toBe(true);
+  });
+
   it('rejects empty password', () => {
     const result = loginSchema.safeParse({
-      email: 'test@example.com',
+      identifier: 'kemal',
       password: '',
     });
     expect(result.success).toBe(false);
   });
 
-  it('rejects invalid email', () => {
+  it('rejects missing identifier and email', () => {
     const result = loginSchema.safeParse({
-      email: 'not-an-email',
       password: 'password123',
     });
     expect(result.success).toBe(false);

@@ -34,7 +34,7 @@ export default function LoginPage() {
 
     try {
       const result = await signIn('credentials', {
-        email: data.email,
+        identifier: data.identifier || data.email,
         password: data.password,
         redirect: false,
       });
@@ -73,15 +73,17 @@ export default function LoginPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">{t.auth.email}</Label>
+              <Label htmlFor="identifier">{t.auth.usernameOrEmail}</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                {...register('email')}
+                id="identifier"
+                type="text"
+                autoCapitalize="none"
+                autoCorrect="off"
+                placeholder={t.auth.usernameOrEmailPlaceholder}
+                {...register('identifier')}
               />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+              {errors.identifier && (
+                <p className="text-sm text-destructive">{errors.identifier.message}</p>
               )}
             </div>
             <div className="space-y-2">

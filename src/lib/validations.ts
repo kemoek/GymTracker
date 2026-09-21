@@ -44,8 +44,12 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  identifier: z.string().min(1, 'Username or email is required').optional(),
+  email: z.string().min(1, 'Username or email is required').optional(),
   password: z.string().min(1, 'Password is required'),
+}).refine((data) => !!(data.identifier || data.email), {
+  message: 'Username or email is required',
+  path: ['identifier'],
 });
 
 export const workoutSchema = z.object({

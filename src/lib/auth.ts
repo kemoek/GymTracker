@@ -4,27 +4,33 @@ import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+import { loginSchema } from '@/lib/validations';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       name: 'credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        identifier: { label: 'Username or Email', type: 'text' },
+        email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const { email, password } = parsed.data;
+        const rawIdentifier = (parsed.data.identifier || parsed.data.email || '').trim();
+        const { password } = parsed.data;
 
-        const user = await prisma.user.findUnique({
-          where: { email: email.toLowerCase() },
+        if (!rawIdentifier) return null;
+
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: rawIdentifier.toLowerCase() },
+              { username: { equals: rawIdentifier, mode: 'insensitive' } },
+            ],
+          },
         });
 
         if (!user) return null;
