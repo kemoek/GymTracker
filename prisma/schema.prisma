@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  avatarUrl    String?
+  weeklyGoal   Int      @default(4)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workouts            Workout[]
+  sentRequests        Friendship[] @relation("requester")
+  receivedRequests    Friendship[] @relation("addressee")
+
+  @@index([username])
+  @@index([email])
+}
+
+model Workout {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String   // ISO date string YYYY-MM-DD to avoid timezone issues
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muscleGroups WorkoutMuscleGroup[]
+
+  @@index([userId])
+  @@index([date])
+  @@index([userId, date])
+}
+
+model WorkoutMuscleGroup {
+  id          String @id @default(cuid())
+  workoutId   String
+  muscleGroup String // enum-like: CHEST, BACK, SHOULDERS, BICEPS, TRICEPS, LEGS, ABS, CARDIO, OTHER
+
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  @@index([workoutId])
+}
+
+model Friendship {
+  id          String   @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requester User @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@index([status])
+}
