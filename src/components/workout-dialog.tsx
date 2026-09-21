@@ -29,9 +29,10 @@ interface WorkoutDialogProps {
   onOpenChange: (open: boolean) => void;
   workout?: Workout | null;
   defaultDate?: string;
+  defaultMuscleGroups?: MuscleGroup[];
 }
 
-export function WorkoutDialog({ open, onOpenChange, workout, defaultDate }: WorkoutDialogProps) {
+export function WorkoutDialog({ open, onOpenChange, workout, defaultDate, defaultMuscleGroups }: WorkoutDialogProps) {
   const createWorkout = useCreateWorkout();
   const updateWorkout = useUpdateWorkout();
   const { t, getMuscleGroupLabel } = useLanguage();
@@ -43,7 +44,7 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate }: Work
     resolver: zodResolver(workoutSchema),
     defaultValues: {
       date: defaultDate || getTodayString(),
-      muscleGroups: [],
+      muscleGroups: defaultMuscleGroups || [],
       note: '',
     },
   });
@@ -61,13 +62,13 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate }: Work
       } else {
         reset({
           date: defaultDate || getTodayString(),
-          muscleGroups: [],
+          muscleGroups: defaultMuscleGroups || [],
           note: '',
         });
       }
       setError('');
     }
-  }, [open, workout, defaultDate, reset]);
+  }, [open, workout, defaultDate, defaultMuscleGroups, reset]);
 
   const toggleMuscleGroup = (group: MuscleGroup) => {
     const current = selectedMuscleGroups as MuscleGroup[];

@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useStatistics, useFriendActivity, useWorkouts, useProfile } from '@/lib/hooks';
+import { useStatistics, useFriendActivity, useWorkouts, useProfile, useRoutine } from '@/lib/hooks';
 import { useLanguage } from '@/lib/i18n';
 import { type MuscleGroup } from '@/lib/validations';
+import { getTodayString } from '@/lib/utils';
 import { WorkoutDialog } from '@/components/workout-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,19 +18,51 @@ import {
   TrendingUp,
   Calendar,
   Dumbbell,
+  ClipboardList,
+  Coffee,
+  CheckCircle2,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [workoutDialogOpen, setWorkoutDialogOpen] = useState(false);
+  const [customDefaultMuscles, setCustomDefaultMuscles] = useState<MuscleGroup[]>([]);
   const { data: stats, isLoading: statsLoading } = useStatistics();
   const { data: profile } = useProfile();
-  const { data: recentWorkouts } = useWorkouts({ limit: 3 });
+  const { data: recentWorkouts } = useWorkouts({ limit: 5 });
   const { data: friendActivity } = useFriendActivity();
-  const { t, formatRelativeDate, getMuscleGroupLabel } = useLanguage();
+  const { data: routineData, isLoading: routineLoading } = useRoutine();
+  const { t, formatRelativeDate, getMuscleGroupLabel, locale } = useLanguage();
 
   const weeklyGoal = profile?.weeklyGoal || 4;
   const weeklyProgress = stats ? Math.min((stats.activeDaysThisWeek / weeklyGoal) * 100, 100) : 0;
   const goalReached = stats ? stats.activeDaysThisWeek >= weeklyGoal : false;
+
+  const todayStr = getTodayString();
+  const isTodayLogged = recentWorkouts?.some((w) => w.date === todayStr);
+
+  const currentDayOfWeek = (() => {
+    const d = new Date().getDay();
+    return d === 0 ? 7 : d;
+  })();
+
+  const todayRoutine = routineData?.routine?.find((r) => r.dayOfWeek === currentDayOfWeek);
+  const hasRoutineConfigured = routineData?.routine && routineData.routine.length > 0;
+
+  const handleStartTodayWorkout = () => {
+    if (todayRoutine && !todayRoutine.isRestDay && todayRoutine.muscleGroups.length > 0) {
+      setCustomDefaultMuscles(todayRoutine.muscleGroups as MuscleGroup[]);
+    } else {
+      setCustomDefaultMuscles([]);
+    }
+    setWorkoutDialogOpen(true);
+  };
+
+  const handleGenericAddWorkout = () => {
+    setCustomDefaultMuscles([]);
+    setWorkoutDialogOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -41,11 +74,121 @@ export default function DashboardPage() {
             {t.dashboard.welcome}, {profile?.username}
           </p>
         </div>
-        <Button onClick={() => setWorkoutDialogOpen(true)} size="lg" className="gap-2">
+        <Button onClick={handleGenericAddWorkout} size="lg" className="gap-2">
           <Plus className="h-5 w-5" />
           <span className="hidden sm:inline">{t.dashboard.addWorkout}</span>
         </Button>
       </div>
+
+      {/* Today's Routine Banner */}
+      <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-card via-card to-primary/5 shadow-sm">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <ClipboardList className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                    {t.routine.todayRoutine} ({t.routine.daysLong[currentDayOfWeek - 1]})
+                  </span>
+                  {isTodayLogged && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {locale === 'tr' ? 'Tamamlandı' : 'Completed'}
+                    </span>
+                  )}
+                </div>
+
+                {todayRoutine?.isRestDay ? (
+                  <div className="flex items-center gap-2 text-muted-foreground pt-0.5">
+                    <Coffee className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm font-medium text-foreground">
+                      {t.routine.restDay}
+                    </p>
+                    <span className="text-xs text-muted-foreground hidden md:inline">
+                      — {t.routine.restDayDesc}
+                    </span>
+                  </div>
+                ) : todayRoutine?.muscleGroups && todayRoutine.muscleGroups.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-base font-semibold text-foreground">
+                      {todayRoutine.title || t.routine.workoutPlanned}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      {todayRoutine.muscleGroups.map((group) => (
+                        <span
+                          key={group}
+                          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-primary/15 text-primary border border-primary/25"
+                        >
+                          {getMuscleGroupLabel(group)}
+                        </span>
+                      ))}
+                      {todayRoutine.notes && (
+                        <span className="text-xs text-muted-foreground italic ml-1">
+                          ({todayRoutine.notes})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : hasRoutineConfigured ? (
+                  <p className="text-sm text-muted-foreground">
+                    {locale === 'tr' ? 'Bugün için özel bir antrenman belirlenmemiş.' : 'No workout planned for today.'}
+                  </p>
+                ) : (
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium text-foreground">
+                      {t.routine.noRoutineSet}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {locale === 'tr'
+                        ? 'Her gün ne yapacağınızı düşünmemek için haftalık programınızı tek tıkla kurun.'
+                        : 'Set up your weekly routine to never wonder what to train each day.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:self-center shrink-0">
+              {!hasRoutineConfigured ? (
+                <Link href="/routine">
+                  <Button size="sm" className="gap-1.5 shadow-sm">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {t.routine.createRoutineBtn}
+                  </Button>
+                </Link>
+              ) : isTodayLogged ? (
+                <div className="flex items-center gap-2">
+                  <Link href="/routine">
+                    <Button variant="outline" size="sm" className="gap-1 text-xs">
+                      {locale === 'tr' ? 'Programı Gör' : 'View Routine'}
+                      <ArrowRight className="h-3 w-3" />
+                    </Button>
+                  </Link>
+                </div>
+              ) : !todayRoutine?.isRestDay && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleStartTodayWorkout}
+                    size="sm"
+                    className="gap-1.5 bg-primary text-primary-foreground font-semibold shadow-sm hover:brightness-105"
+                  >
+                    <Dumbbell className="h-3.5 w-3.5" />
+                    {t.routine.logTodayBtn}
+                  </Button>
+                  <Link href="/routine">
+                    <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground">
+                      {locale === 'tr' ? 'Düzenle' : 'Edit'}
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Weekly Goal */}
       <Card>
@@ -190,7 +333,11 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <WorkoutDialog open={workoutDialogOpen} onOpenChange={setWorkoutDialogOpen} />
+      <WorkoutDialog
+        open={workoutDialogOpen}
+        onOpenChange={setWorkoutDialogOpen}
+        defaultMuscleGroups={customDefaultMuscles}
+      />
     </div>
   );
 }

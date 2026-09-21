@@ -2,7 +2,7 @@
 
 import { use } from 'react';
 import Link from 'next/link';
-import { useUserProfile, useSendFriendRequest } from '@/lib/hooks';
+import { useUserProfile, useSendFriendRequest, useUserRoutine } from '@/lib/hooks';
 import { useLanguage } from '@/lib/i18n';
 import { type MuscleGroup } from '@/lib/validations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -22,6 +22,8 @@ import {
   UserPlus,
   Clock,
   Activity,
+  ClipboardList,
+  Coffee,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -46,8 +48,14 @@ const CHART_COLORS = [
 export default function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data, isLoading, error } = useUserProfile(id);
+  const { data: routineData } = useUserRoutine(id);
   const { t, locale, formatRelativeDate, getMuscleGroupLabel } = useLanguage();
   const sendRequest = useSendFriendRequest();
+
+  const currentDayOfWeek = (() => {
+    const d = new Date().getDay();
+    return d === 0 ? 7 : d;
+  })();
 
   if (isLoading) {
     return (
@@ -212,6 +220,82 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
           </CardContent>
         </Card>
       </div>
+
+      {/* Weekly Routine / Split */}
+      {routineData?.routine && routineData.routine.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-primary" />
+              {locale === 'tr' ? `${user.username} Haftalık Antrenman Programı` : `${user.username}'s Weekly Routine`}
+            </CardTitle>
+            <CardDescription className="text-xs">
+              {locale === 'tr'
+                ? 'Haftanın günlerine göre belirlenmiş antrenman ve dinlenme spliti'
+                : 'Planned workout and rest split across the week'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+              {Array.from({ length: 7 }, (_, i) => i + 1).map((dayNum) => {
+                const dayPlan = routineData.routine.find((r) => r.dayOfWeek === dayNum);
+                const isToday = dayNum === currentDayOfWeek;
+                const dayName = t.routine.daysLong[dayNum - 1];
+
+                return (
+                  <div
+                    key={dayNum}
+                    className={cn(
+                      'p-2.5 rounded-lg border flex flex-col justify-between min-h-[110px] relative text-xs',
+                      isToday
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                        : 'border-border/70 bg-card/60'
+                    )}
+                  >
+                    {isToday && (
+                      <span className="absolute top-1 right-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-primary text-primary-foreground">
+                        {t.routine.today}
+                      </span>
+                    )}
+                    <span className={cn('font-semibold text-xs mb-1.5', isToday ? 'text-primary' : 'text-foreground')}>
+                      {dayName}
+                    </span>
+
+                    {dayPlan?.isRestDay ? (
+                      <div className="my-auto text-center flex flex-col items-center py-2 text-muted-foreground">
+                        <Coffee className="h-4 w-4 mb-1 text-muted-foreground/70" />
+                        <span className="text-[11px] font-medium">{t.routine.restDay}</span>
+                      </div>
+                    ) : dayPlan && dayPlan.muscleGroups && dayPlan.muscleGroups.length > 0 ? (
+                      <div className="space-y-1.5 my-auto">
+                        {dayPlan.title && (
+                          <p className="font-semibold text-foreground text-[11px] line-clamp-1">
+                            {dayPlan.title}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-1">
+                          {dayPlan.muscleGroups.map((mg) => (
+                            <span
+                              key={mg}
+                              className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20"
+                            >
+                              {getMuscleGroupLabel(mg)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground italic my-auto">
+                        {locale === 'tr' ? 'Boş' : 'Empty'}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* What did they train? (Muscle Group Distribution) */}
       <Card>

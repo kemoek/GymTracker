@@ -327,3 +327,53 @@ export function useUserProfile(id: string) {
     enabled: status === 'authenticated' && !!id,
   });
 }
+
+// ---- Routine ----
+
+export interface RoutineDayItem {
+  dayOfWeek: number; // 1..7
+  isRestDay: boolean;
+  title: string | null;
+  muscleGroups: string[];
+  notes?: string;
+}
+
+export function useRoutine() {
+  const { status } = useSession();
+  return useQuery({
+    queryKey: ['routine'],
+    queryFn: () => apiFetch<{ routine: RoutineDayItem[] }>('/api/routine'),
+    enabled: status === 'authenticated',
+  });
+}
+
+export function useUpdateRoutine() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { days: RoutineDayItem[] }) =>
+      apiFetch('/api/routine', { method: 'PUT', body: JSON.stringify(data) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routine'] });
+    },
+  });
+}
+
+export function useApplyRoutinePreset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (preset: 'ppl' | 'upper_lower' | 'bro_split' | 'full_body') =>
+      apiFetch('/api/routine/preset', { method: 'POST', body: JSON.stringify({ preset }) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routine'] });
+    },
+  });
+}
+
+export function useUserRoutine(userId: string) {
+  const { status } = useSession();
+  return useQuery({
+    queryKey: ['userRoutine', userId],
+    queryFn: () => apiFetch<{ routine: RoutineDayItem[] }>(`/api/users/${userId}/routine`),
+    enabled: status === 'authenticated' && !!userId,
+  });
+}

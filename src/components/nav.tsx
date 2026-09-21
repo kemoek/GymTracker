@@ -17,6 +17,7 @@ import {
   User,
   LogOut,
   Dumbbell,
+  ClipboardList,
 } from 'lucide-react';
 
 export function Nav() {
@@ -29,6 +30,7 @@ export function Nav() {
 
   const navItems = [
     { href: '/dashboard', label: t.nav.home, icon: LayoutDashboard },
+    { href: '/routine', label: t.nav.routine, icon: ClipboardList },
     { href: '/calendar', label: t.nav.calendar, icon: Calendar },
     { href: '/statistics', label: t.nav.statistics, icon: BarChart3 },
     { href: '/friends', label: t.nav.friends, icon: Users, badge: pendingRequestsCount },
