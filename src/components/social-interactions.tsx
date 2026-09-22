@@ -75,7 +75,7 @@ export function SocialInteractions({
     setShowComments(!showComments);
   };
 
-  const handleSendComment = async (e?: React.FormEvent) => {
+  const handleSendComment = async (e?: React.SyntheticEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -193,7 +193,14 @@ export function SocialInteractions({
           )}
 
           {/* New Comment Input */}
-          <form onSubmit={handleSendComment} className="space-y-1.5">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSendComment(e);
+            }}
+            className="space-y-1.5"
+          >
             <div className="flex items-center gap-1.5">
               <Input
                 value={commentText}
@@ -204,7 +211,8 @@ export function SocialInteractions({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    handleSendComment();
+                    e.stopPropagation();
+                    handleSendComment(e);
                   }
                 }}
                 placeholder={locale === 'tr' ? 'Tebrik et veya yorum yaz...' : 'Add a comment...'}
@@ -213,12 +221,14 @@ export function SocialInteractions({
                 disabled={addComment.isPending}
               />
               <Button
-                type="submit"
+                type="button"
                 size="sm"
                 disabled={!commentText.trim() || addComment.isPending}
                 className="h-8 px-2.5 gap-1 shrink-0 text-xs"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
+                  handleSendComment(e);
                 }}
               >
                 {addComment.isPending ? (
