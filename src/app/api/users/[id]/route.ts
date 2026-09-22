@@ -73,6 +73,14 @@ export async function GET(
           user: { select: { id: true, username: true, avatarUrl: true } },
         },
       },
+      fistBumps: {
+        include: {
+          user: { select: { id: true, username: true } },
+        },
+      },
+      _count: {
+        select: { comments: true },
+      },
     },
     orderBy: { date: 'desc' },
   });
@@ -150,6 +158,13 @@ export async function GET(
     note: w.note,
     muscleGroups: w.muscleGroups.map((mg) => mg.muscleGroup),
     buddies: w.buddies.map((b) => b.user),
+    fistBumpCount: w.fistBumps.length,
+    hasFistBumped: w.fistBumps.some((fb) => fb.userId === currentUserId),
+    fistBumps: w.fistBumps.map((fb) => ({
+      id: fb.user.id,
+      username: fb.user.username,
+    })),
+    commentCount: w._count.comments,
   }));
 
   return NextResponse.json({

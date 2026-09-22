@@ -24,7 +24,7 @@ export const translations = {
       username: 'Kullanıcı Adı',
       email: 'E-posta',
       usernameOrEmail: 'Kullanıcı Adı veya E-posta',
-      usernameOrEmailPlaceholder: 'Username / sample@email.com',
+      usernameOrEmailPlaceholder: 'Kullanıcı Adı / örnek@email.com',
       password: 'Şifre',
       confirmPassword: 'Şifreyi Onayla',
       signInBtn: 'Giriş Yap',
@@ -92,6 +92,7 @@ export const translations = {
       title: 'Arkadaşlar',
       tabs: {
         friends: 'Arkadaşlar',
+        leaderboard: 'Liderlik Tablosu',
         requests: 'İstekler',
         compare: 'Karşılaştır',
         add: 'Ekle',
@@ -301,6 +302,7 @@ export const translations = {
       title: 'Friends',
       tabs: {
         friends: 'Friends',
+        leaderboard: 'Leaderboard',
         requests: 'Requests',
         compare: 'Compare',
         add: 'Add',

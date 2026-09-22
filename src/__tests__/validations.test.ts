@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { registerSchema, loginSchema, workoutSchema, changePasswordSchema, weeklyGoalSchema } from '@/lib/validations';
+import { registerSchema, loginSchema, workoutSchema, changePasswordSchema, weeklyGoalSchema, commentSchema } from '@/lib/validations';
 
 describe('registerSchema', () => {
   it('accepts valid registration data', () => {
@@ -215,5 +215,30 @@ describe('weeklyGoalSchema', () => {
   it('rejects non-integers', () => {
     const result = weeklyGoalSchema.safeParse({ weeklyGoal: 3.5 });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('commentSchema', () => {
+  it('accepts valid comment', () => {
+    const result = commentSchema.safeParse({ content: 'Harika antrenman tebrikler! 👏' });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects empty or whitespace-only comment', () => {
+    const result = commentSchema.safeParse({ content: '   ' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects comments exceeding 300 characters', () => {
+    const result = commentSchema.safeParse({ content: 'a'.repeat(301) });
+    expect(result.success).toBe(false);
+  });
+
+  it('trims whitespace', () => {
+    const result = commentSchema.safeParse({ content: '  Tebrikler!  ' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.content).toBe('Tebrikler!');
+    }
   });
 });

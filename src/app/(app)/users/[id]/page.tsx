@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { SocialInteractions } from '@/components/social-interactions';
 import {
   ArrowLeft,
   Calendar,
@@ -448,6 +449,13 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
                         💬 {w.note}
                       </p>
                     )}
+                    <SocialInteractions
+                      workoutId={w.id}
+                      initialFistBumpCount={w.fistBumpCount || 0}
+                      initialHasFistBumped={w.hasFistBumped || false}
+                      initialFistBumps={w.fistBumps || []}
+                      initialCommentCount={w.commentCount || 0}
+                    />
                   </div>
                 </div>
               ))}

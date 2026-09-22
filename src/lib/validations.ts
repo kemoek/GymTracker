@@ -86,3 +86,7 @@ export const changePasswordSchema = z.object({
 export const weeklyGoalSchema = z.object({
   weeklyGoal: z.number().int().min(1).max(7),
 });
+
+export const commentSchema = z.object({
+  content: z.string().trim().min(1, 'Comment cannot be empty').max(300, 'Comment too long'),
+});

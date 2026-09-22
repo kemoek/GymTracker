@@ -8,6 +8,8 @@ import { type MuscleGroup } from '@/lib/validations';
 import { getTodayString } from '@/lib/utils';
 import { WorkoutDialog } from '@/components/workout-dialog';
 import { MotivationalNudge } from '@/components/motivational-nudge';
+import { SocialInteractions } from '@/components/social-interactions';
+import { LeaderboardCard } from '@/components/leaderboard-card';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -392,38 +394,62 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {friendActivity.slice(0, 5).map((activity) => (
-                  <Link
+                  <div
                     key={activity.id}
-                    href={`/users/${activity.user.id}`}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-accent/40 transition-colors cursor-pointer"
+                    className="p-3 rounded-lg bg-muted/50 hover:bg-accent/20 transition-colors"
                   >
-                    <Avatar className="h-9 w-9 shrink-0 mt-0.5">
-                      <AvatarFallback className="text-xs">
-                        {activity.user.username.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm">
-                        <span className="font-semibold hover:text-primary transition-colors">{activity.user.username}</span>{' '}
-                        {t.dashboard.completedWorkout}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
-                        <span>{formatRelativeDate(activity.date)} • {activity.muscleGroups.map((mg) => getMuscleGroupLabel(mg as MuscleGroup)).join(' + ')}</span>
-                        {activity.buddies && activity.buddies.length > 0 && (
-                          <span className="inline-flex items-center gap-1 font-medium text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.2 rounded text-[11px]">
-                            <span>🤝</span>
-                            <span>{activity.buddies.map((b) => b.username).join(', ')}</span>
+                    <div className="flex items-start gap-3">
+                      <Link href={`/users/${activity.user.id}`}>
+                        <Avatar className="h-9 w-9 shrink-0 mt-0.5 hover:ring-2 hover:ring-primary/40 transition-all cursor-pointer">
+                          <AvatarFallback className="text-xs">
+                            {activity.user.username.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Link>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm">
+                          <Link
+                            href={`/users/${activity.user.id}`}
+                            className="font-semibold hover:text-primary transition-colors cursor-pointer"
+                          >
+                            {activity.user.username}
+                          </Link>{' '}
+                          {t.dashboard.completedWorkout}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
+                          <span>
+                            {formatRelativeDate(activity.date)} •{' '}
+                            {activity.muscleGroups
+                              .map((mg) => getMuscleGroupLabel(mg as MuscleGroup))
+                              .join(' + ')}
                           </span>
-                        )}
+                          {activity.buddies && activity.buddies.length > 0 && (
+                            <span className="inline-flex items-center gap-1 font-medium text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.2 rounded text-[11px]">
+                              <span>🤝</span>
+                              <span>{activity.buddies.map((b) => b.username).join(', ')}</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </Link>
+
+                    <SocialInteractions
+                      workoutId={activity.id}
+                      initialFistBumpCount={activity.fistBumpCount || 0}
+                      initialHasFistBumped={activity.hasFistBumped || false}
+                      initialFistBumps={activity.fistBumps || []}
+                      initialCommentCount={activity.commentCount || 0}
+                    />
+                  </div>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Leaderboard Card Preview */}
+      <LeaderboardCard compact />
 
       <WorkoutDialog
         open={workoutDialogOpen}

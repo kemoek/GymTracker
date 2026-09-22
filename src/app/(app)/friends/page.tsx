@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserPlus, UserMinus, Check, X, Search, Users, Trophy } from 'lucide-react';
+import { LeaderboardCard } from '@/components/leaderboard-card';
 
 export default function FriendsPage() {
   const { data: friends, isLoading: friendsLoading } = useFriends();
@@ -57,6 +58,9 @@ export default function FriendsPage() {
         <TabsList className="w-full">
           <TabsTrigger value="friends" className="flex-1">
             {t.friends.tabs.friends}
+          </TabsTrigger>
+          <TabsTrigger value="leaderboard" className="flex-1">
+            {t.friends.tabs.leaderboard}
           </TabsTrigger>
           <TabsTrigger value="requests" className="flex-1 relative">
             {t.friends.tabs.requests}
@@ -184,6 +188,11 @@ export default function FriendsPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Leaderboard */}
+        <TabsContent value="leaderboard">
+          <LeaderboardCard />
         </TabsContent>
 
         {/* Comparison */}

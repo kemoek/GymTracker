@@ -23,6 +23,8 @@ model User {
   sentRequests        Friendship[]   @relation("requester")
   receivedRequests    Friendship[]   @relation("addressee")
   taggedInWorkouts    WorkoutBuddy[] @relation("buddyUser")
+  fistBumps           WorkoutFistBump[]
+  comments            WorkoutComment[]
 
   @@index([username])
   @@index([email])
@@ -39,6 +41,8 @@ model Workout {
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   muscleGroups WorkoutMuscleGroup[]
   buddies      WorkoutBuddy[]
+  fistBumps    WorkoutFistBump[]
+  comments     WorkoutComment[]
 
   @@index([userId])
   @@index([date])
@@ -102,4 +106,34 @@ model RoutineDay {
   @@unique([userId, dayOfWeek])
   @@index([userId])
 }
+
+model WorkoutFistBump {
+  id        String   @id @default(cuid())
+  workoutId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutId, userId])
+  @@index([workoutId])
+  @@index([userId])
+}
+
+model WorkoutComment {
+  id        String   @id @default(cuid())
+  workoutId String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workoutId])
+  @@index([userId])
+}
+
 

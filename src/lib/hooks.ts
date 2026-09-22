@@ -268,6 +268,10 @@ export interface FriendActivity {
   date: string;
   muscleGroups: string[];
   buddies?: WorkoutBuddyUser[];
+  fistBumps?: { id: string; username: string }[];
+  fistBumpCount?: number;
+  hasFistBumped?: boolean;
+  commentCount?: number;
 }
 
 export function useFriendActivity() {
@@ -329,6 +333,10 @@ export interface UserProfileDetail {
       note: string | null;
       muscleGroups: string[];
       buddies?: WorkoutBuddyUser[];
+      fistBumps?: { id: string; username: string }[];
+      fistBumpCount?: number;
+      hasFistBumped?: boolean;
+      commentCount?: number;
     }[];
   };
 }
@@ -402,6 +410,95 @@ export function useRecommendation(date?: string) {
       apiFetch<RecommendationResult>(
         date ? `/api/recommendation?date=${date}` : '/api/recommendation'
       ),
+    enabled: status === 'authenticated',
+  });
+}
+
+// ---- Social: Fist Bump & Comments ----
+
+export function useToggleFistBump() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (workoutId: string) =>
+      apiFetch<{ hasFistBumped: boolean; count: number; users: { id: string; username: string }[] }>(
+        `/api/workouts/${workoutId}/fistbump`,
+        { method: 'POST' }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friendActivity'] });
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+    },
+  });
+}
+
+export interface WorkoutCommentItem {
+  id: string;
+  workoutId: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+  user: { id: string; username: string; avatarUrl: string | null };
+}
+
+export function useWorkoutComments(workoutId: string) {
+  return useQuery({
+    queryKey: ['workoutComments', workoutId],
+    queryFn: () => apiFetch<WorkoutCommentItem[]>(`/api/workouts/${workoutId}/comments`),
+    enabled: !!workoutId,
+  });
+}
+
+export function useAddWorkoutComment(workoutId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (content: string) =>
+      apiFetch<WorkoutCommentItem>(`/api/workouts/${workoutId}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workoutComments', workoutId] });
+      queryClient.invalidateQueries({ queryKey: ['friendActivity'] });
+    },
+  });
+}
+
+export function useDeleteWorkoutComment(workoutId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) =>
+      apiFetch(`/api/workouts/${workoutId}/comments/${commentId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workoutComments', workoutId] });
+      queryClient.invalidateQueries({ queryKey: ['friendActivity'] });
+    },
+  });
+}
+
+// ---- Leaderboard ----
+
+export interface LeaderboardEntry {
+  rank: number;
+  user: { id: string; username: string; avatarUrl: string | null };
+  weeklyGoal: number;
+  isSelf: boolean;
+  workoutsThisWeek: number;
+  workoutsThisMonth: number;
+  currentStreak: number;
+  totalWorkouts: number;
+}
+
+export interface LeaderboardData {
+  weeklyRanking: LeaderboardEntry[];
+  monthlyRanking: LeaderboardEntry[];
+  streakRanking: LeaderboardEntry[];
+}
+
+export function useLeaderboard() {
+  const { status } = useSession();
+  return useQuery({
+    queryKey: ['leaderboard'],
+    queryFn: () => apiFetch<LeaderboardData>('/api/friends/leaderboard'),
     enabled: status === 'authenticated',
   });
 }
