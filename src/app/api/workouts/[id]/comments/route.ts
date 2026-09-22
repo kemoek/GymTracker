@@ -45,6 +45,15 @@ export async function POST(
       );
     }
 
+    const workout = await prisma.workout.findUnique({
+      where: { id: workoutId },
+      select: { id: true },
+    });
+
+    if (!workout) {
+      return NextResponse.json({ error: 'Workout not found' }, { status: 404 });
+    }
+
     const comment = await prisma.workoutComment.create({
       data: {
         workoutId,
@@ -61,6 +70,7 @@ export async function POST(
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {
     console.error('Comment creation error:', error);
-    return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to create comment';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

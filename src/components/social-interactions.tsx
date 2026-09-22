@@ -12,7 +12,7 @@ import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MessageSquare, Trash2, Send } from 'lucide-react';
+import { MessageSquare, Trash2, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SocialInteractionsProps {
@@ -38,6 +38,7 @@ export function SocialInteractions({
   const [bumping, setBumping] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [commentError, setCommentError] = useState('');
 
   const toggleFistBump = useToggleFistBump();
   const { data: comments, isLoading: commentsLoading } = useWorkoutComments(
@@ -74,17 +75,21 @@ export function SocialInteractions({
     setShowComments(!showComments);
   };
 
-  const handleSendComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!commentText.trim() || addComment.isPending) return;
-
+  const handleSendComment = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const text = commentText.trim();
-    setCommentText('');
+    if (!text || addComment.isPending) return;
+
+    setCommentError('');
     try {
       await addComment.mutateAsync(text);
-    } catch {
-      setCommentText(text);
+      setCommentText('');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (locale === 'tr' ? 'Yorum gönderilemedi' : 'Failed to send comment');
+      setCommentError(msg);
     }
   };
 
@@ -141,7 +146,6 @@ export function SocialInteractions({
       {showComments && (
         <div
           onClick={(e) => {
-            e.preventDefault();
             e.stopPropagation();
           }}
           className="mt-3 pt-2.5 border-t border-border/40 space-y-2.5 animate-in fade-in"
@@ -189,22 +193,46 @@ export function SocialInteractions({
           )}
 
           {/* New Comment Input */}
-          <form onSubmit={handleSendComment} className="flex items-center gap-1.5">
-            <Input
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder={locale === 'tr' ? 'Tebrik et veya yorum yaz...' : 'Add a comment...'}
-              className="h-8 text-xs"
-              maxLength={200}
-            />
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!commentText.trim() || addComment.isPending}
-              className="h-8 px-2.5 gap-1 shrink-0 text-xs"
-            >
-              <Send className="h-3 w-3" />
-            </Button>
+          <form onSubmit={handleSendComment} className="space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <Input
+                value={commentText}
+                onChange={(e) => {
+                  setCommentText(e.target.value);
+                  if (commentError) setCommentError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendComment();
+                  }
+                }}
+                placeholder={locale === 'tr' ? 'Tebrik et veya yorum yaz...' : 'Add a comment...'}
+                className="h-8 text-xs"
+                maxLength={200}
+                disabled={addComment.isPending}
+              />
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!commentText.trim() || addComment.isPending}
+                className="h-8 px-2.5 gap-1 shrink-0 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                {addComment.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Send className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
+            {commentError && (
+              <p className="text-[11px] text-destructive font-medium pl-1 animate-in fade-in">
+                {commentError}
+              </p>
+            )}
           </form>
         </div>
       )}

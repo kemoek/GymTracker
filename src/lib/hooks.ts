@@ -459,6 +459,7 @@ export function useAddWorkoutComment(workoutId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workoutComments', workoutId] });
       queryClient.invalidateQueries({ queryKey: ['friendActivity'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
     },
   });
 }
@@ -471,6 +472,7 @@ export function useDeleteWorkoutComment(workoutId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workoutComments', workoutId] });
       queryClient.invalidateQueries({ queryKey: ['friendActivity'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
     },
   });
 }
