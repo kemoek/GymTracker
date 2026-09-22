@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
+import type { RecommendationResult } from './recommendation';
 
 // Generic fetch helper
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
@@ -375,5 +376,19 @@ export function useUserRoutine(userId: string) {
     queryKey: ['userRoutine', userId],
     queryFn: () => apiFetch<{ routine: RoutineDayItem[] }>(`/api/users/${userId}/routine`),
     enabled: status === 'authenticated' && !!userId,
+  });
+}
+
+// ---- Recommendation ----
+
+export function useRecommendation(date?: string) {
+  const { status } = useSession();
+  return useQuery({
+    queryKey: ['recommendation', date || 'today'],
+    queryFn: () =>
+      apiFetch<RecommendationResult>(
+        date ? `/api/recommendation?date=${date}` : '/api/recommendation'
+      ),
+    enabled: status === 'authenticated',
   });
 }

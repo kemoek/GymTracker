@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useStatistics, useFriendActivity, useWorkouts, useProfile, useRoutine } from '@/lib/hooks';
+import { useStatistics, useFriendActivity, useWorkouts, useProfile, useRoutine, useRecommendation } from '@/lib/hooks';
 import { useLanguage } from '@/lib/i18n';
 import { type MuscleGroup } from '@/lib/validations';
 import { getTodayString } from '@/lib/utils';
 import { WorkoutDialog } from '@/components/workout-dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   ArrowRight,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -33,6 +34,7 @@ export default function DashboardPage() {
   const { data: recentWorkouts } = useWorkouts({ limit: 5 });
   const { data: friendActivity } = useFriendActivity();
   const { data: routineData, isLoading: routineLoading } = useRoutine();
+  const { data: recommendation } = useRecommendation();
   const { t, formatRelativeDate, getMuscleGroupLabel, locale } = useLanguage();
 
   const weeklyGoal = profile?.weeklyGoal || 4;
@@ -189,6 +191,76 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Smart Coach Recommendation Card */}
+      {recommendation && !isTodayLogged && (
+        <Card className="border-indigo-500/30 bg-gradient-to-br from-card via-card to-indigo-500/5 shadow-sm overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                  <Zap className="h-4 w-4" />
+                </div>
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  {t.recommendation.title}
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                    {t.recommendation.badge}
+                  </span>
+                </CardTitle>
+              </div>
+            </div>
+            <CardDescription className="text-xs">
+              {locale === 'tr' ? recommendation.reasonTr : recommendation.reasonEn}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-muted/40 border border-border/60">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {recommendation.isRest ? t.recommendation.restDayRecommended : t.recommendation.restedReady}:
+                  </span>
+                  <span className="text-sm font-bold text-foreground">
+                    {locale === 'tr' ? recommendation.titleTr : recommendation.titleEn}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  {recommendation.muscleGroups.map((group) => (
+                    <span
+                      key={group}
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
+                    >
+                      {getMuscleGroupLabel(group)}
+                    </span>
+                  ))}
+                  {recommendation.detailedAnalysis.yesterdayMuscles.length > 0 && (
+                    <span className="text-[11px] text-muted-foreground flex items-center gap-1 ml-1">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400/80" />
+                      {t.recommendation.yesterdayTrained}:{' '}
+                      {recommendation.detailedAnalysis.yesterdayMuscles.map((m) => getMuscleGroupLabel(m)).join(', ')}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {!recommendation.isRest && (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setCustomDefaultMuscles(recommendation.muscleGroups);
+                    setWorkoutDialogOpen(true);
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs gap-1.5 shrink-0 shadow-sm"
+                >
+                  <Dumbbell className="h-3.5 w-3.5" />
+                  {t.recommendation.startRecommendedBtn}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Weekly Goal */}
       <Card>

@@ -193,6 +193,16 @@ export const translations = {
       daysLong: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'],
       today: 'Bugün',
     },
+    recommendation: {
+      title: 'Akıllı Antrenman Önerisi',
+      subtitle: 'Son 7 günlük antrenman geçmişine göre analiz edildi',
+      coachTip: 'Koç Analizi & Gerekçe',
+      restedReady: 'Hedeflenen Kaslar',
+      yesterdayTrained: 'Dün Çalışıldı (Dinlendiriliyor)',
+      startRecommendedBtn: 'Önerilen Antrenmanı Başlat',
+      restDayRecommended: 'Bugün Vücudunu Dinlendir',
+      badge: 'Akıllı Öneri',
+    },
     muscleGroups: {
       CHEST: 'Göğüs',
       BACK: 'Sırt',
@@ -391,6 +401,16 @@ export const translations = {
       saving: 'Saving...',
       daysLong: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
       today: 'Today',
+    },
+    recommendation: {
+      title: 'Smart Workout Suggestion',
+      subtitle: 'Analyzed based on your last 7 days of workout history',
+      coachTip: 'Coach Analysis & Reasoning',
+      restedReady: 'Target Muscles',
+      yesterdayTrained: 'Trained Yesterday (Resting)',
+      startRecommendedBtn: 'Start Recommended Workout',
+      restDayRecommended: 'Rest Your Body Today',
+      badge: 'Smart Suggestion',
     },
     muscleGroups: {
       CHEST: 'Chest',
