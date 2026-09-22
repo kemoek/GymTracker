@@ -233,7 +233,7 @@ export const translations = {
       username: 'Username',
       email: 'Email',
       usernameOrEmail: 'Username or Email',
-      usernameOrEmailPlaceholder: 'kemal or you@example.com',
+      usernameOrEmailPlaceholder: 'Username or you@example.com',
       password: 'Password',
       confirmPassword: 'Confirm Password',
       signInBtn: 'Sign In',

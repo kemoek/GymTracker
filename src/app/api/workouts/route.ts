@@ -31,6 +31,11 @@ export async function GET(request: NextRequest) {
     where,
     include: {
       muscleGroups: { select: { muscleGroup: true } },
+      buddies: {
+        include: {
+          user: { select: { id: true, username: true, avatarUrl: true } },
+        },
+      },
     },
     orderBy: { date: 'desc' },
     ...(limit && { take: parseInt(limit) }),
@@ -39,6 +44,7 @@ export async function GET(request: NextRequest) {
   const result = workouts.map((w) => ({
     ...w,
     muscleGroups: w.muscleGroups.map((mg) => mg.muscleGroup),
+    buddies: w.buddies.map((b) => b.user),
   }));
 
   return NextResponse.json(result);
@@ -59,7 +65,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { date, muscleGroups, note } = parsed.data;
+    const { date, muscleGroups, note, buddyUserIds } = parsed.data;
 
     const workout = await prisma.workout.create({
       data: {
@@ -69,9 +75,19 @@ export async function POST(request: Request) {
         muscleGroups: {
           create: muscleGroups.map((mg) => ({ muscleGroup: mg })),
         },
+        ...(buddyUserIds && buddyUserIds.length > 0 && {
+          buddies: {
+            create: buddyUserIds.map((buddyId) => ({ userId: buddyId })),
+          },
+        }),
       },
       include: {
         muscleGroups: { select: { muscleGroup: true } },
+        buddies: {
+          include: {
+            user: { select: { id: true, username: true, avatarUrl: true } },
+          },
+        },
       },
     });
 
@@ -79,6 +95,7 @@ export async function POST(request: Request) {
       {
         ...workout,
         muscleGroups: workout.muscleGroups.map((mg) => mg.muscleGroup),
+        buddies: workout.buddies.map((b) => b.user),
       },
       { status: 201 }
     );

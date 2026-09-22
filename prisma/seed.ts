@@ -79,8 +79,6 @@ async function main() {
     },
   });
 
-  console.log('✅ Created users: kemal, ozi, rido');
-  console.log('   Password for all: password123\n');
 
   // Create friendships
   await prisma.friendship.create({

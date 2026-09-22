@@ -90,7 +90,7 @@ export default function RegisterPage() {
               <Label htmlFor="username">{t.auth.username}</Label>
               <Input
                 id="username"
-                placeholder="kemal"
+                placeholder="username"
                 {...register('username')}
               />
               {errors.username && (

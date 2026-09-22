@@ -20,8 +20,9 @@ model User {
 
   workouts            Workout[]
   routineDays         RoutineDay[]
-  sentRequests        Friendship[] @relation("requester")
-  receivedRequests    Friendship[] @relation("addressee")
+  sentRequests        Friendship[]   @relation("requester")
+  receivedRequests    Friendship[]   @relation("addressee")
+  taggedInWorkouts    WorkoutBuddy[] @relation("buddyUser")
 
   @@index([username])
   @@index([email])
@@ -37,10 +38,25 @@ model Workout {
 
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   muscleGroups WorkoutMuscleGroup[]
+  buddies      WorkoutBuddy[]
 
   @@index([userId])
   @@index([date])
   @@index([userId, date])
+}
+
+model WorkoutBuddy {
+  id        String   @id @default(cuid())
+  workoutId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user    User    @relation("buddyUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutId, userId])
+  @@index([workoutId])
+  @@index([userId])
 }
 
 model WorkoutMuscleGroup {

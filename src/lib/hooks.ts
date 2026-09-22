@@ -70,12 +70,19 @@ export function useUpdateGoal() {
 
 // ---- Workouts ----
 
+export interface WorkoutBuddyUser {
+  id: string;
+  username: string;
+  avatarUrl?: string | null;
+}
+
 export interface Workout {
   id: string;
   userId: string;
   date: string;
   note: string | null;
   muscleGroups: string[];
+  buddies?: WorkoutBuddyUser[];
   createdAt: string;
   updatedAt: string;
 }
@@ -109,11 +116,13 @@ export function useWorkout(id: string) {
 export function useCreateWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { date: string; muscleGroups: string[]; note?: string }) =>
+    mutationFn: (data: { date: string; muscleGroups: string[]; note?: string; buddyUserIds?: string[] }) =>
       apiFetch<Workout>('/api/workouts', { method: 'POST', body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
       queryClient.invalidateQueries({ queryKey: ['statistics'] });
+      queryClient.invalidateQueries({ queryKey: ['friendActivity'] });
+      queryClient.invalidateQueries({ queryKey: ['recommendation'] });
     },
   });
 }
@@ -121,11 +130,13 @@ export function useCreateWorkout() {
 export function useUpdateWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string; date: string; muscleGroups: string[]; note?: string }) =>
+    mutationFn: ({ id, ...data }: { id: string; date: string; muscleGroups: string[]; note?: string; buddyUserIds?: string[] }) =>
       apiFetch<Workout>(`/api/workouts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
       queryClient.invalidateQueries({ queryKey: ['statistics'] });
+      queryClient.invalidateQueries({ queryKey: ['friendActivity'] });
+      queryClient.invalidateQueries({ queryKey: ['recommendation'] });
     },
   });
 }
@@ -256,6 +267,7 @@ export interface FriendActivity {
   user: { id: string; username: string; avatarUrl: string | null };
   date: string;
   muscleGroups: string[];
+  buddies?: WorkoutBuddyUser[];
 }
 
 export function useFriendActivity() {
@@ -316,6 +328,7 @@ export interface UserProfileDetail {
       date: string;
       note: string | null;
       muscleGroups: string[];
+      buddies?: WorkoutBuddyUser[];
     }[];
   };
 }

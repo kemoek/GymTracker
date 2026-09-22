@@ -437,6 +437,12 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
                         {formatRelativeDate(w.date)}
                       </span>
                     </div>
+                    {w.buddies && w.buddies.length > 0 && (
+                      <p className="text-xs text-primary font-medium flex items-center gap-1 mt-1">
+                        <span>🤝</span>
+                        <span>{w.buddies.map((b) => b.username).join(', ')} {locale === 'tr' ? 'ile birlikte' : 'with'}</span>
+                      </p>
+                    )}
                     {w.note && (
                       <p className="text-xs text-muted-foreground mt-1 bg-background/50 rounded p-2 border border-border/20">
                         💬 {w.note}

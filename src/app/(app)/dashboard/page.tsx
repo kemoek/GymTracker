@@ -7,6 +7,7 @@ import { useLanguage } from '@/lib/i18n';
 import { type MuscleGroup } from '@/lib/validations';
 import { getTodayString } from '@/lib/utils';
 import { WorkoutDialog } from '@/components/workout-dialog';
+import { MotivationalNudge } from '@/components/motivational-nudge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -24,6 +25,7 @@ import {
   ArrowRight,
   Sparkles,
   Zap,
+  Users,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -262,6 +264,13 @@ export default function DashboardPage() {
         </Card>
       )}
 
+      {/* Motivational Nudge (Harekete Geçirici) */}
+      <MotivationalNudge
+        activeDaysThisWeek={stats?.activeDaysThisWeek || 0}
+        weeklyGoal={weeklyGoal}
+        currentStreak={stats?.currentStreak || 0}
+      />
+
       {/* Weekly Goal */}
       <Card>
         <CardContent className="pt-6">
@@ -346,16 +355,22 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 {recentWorkouts.map((workout) => (
                   <div key={workout.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 shrink-0 mt-0.5">
                       <Dumbbell className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">
                         {workout.muscleGroups.map((mg) => getMuscleGroupLabel(mg as MuscleGroup)).join(' + ')}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatRelativeDate(workout.date)}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
+                        <span>{formatRelativeDate(workout.date)}</span>
+                        {workout.buddies && workout.buddies.length > 0 && (
+                          <span className="inline-flex items-center gap-1 font-medium text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.2 rounded text-[11px]">
+                            <span>🤝</span>
+                            <span>{workout.buddies.map((b) => b.username).join(', ')}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -382,7 +397,7 @@ export default function DashboardPage() {
                     href={`/users/${activity.user.id}`}
                     className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-accent/40 transition-colors cursor-pointer"
                   >
-                    <Avatar className="h-9 w-9">
+                    <Avatar className="h-9 w-9 shrink-0 mt-0.5">
                       <AvatarFallback className="text-xs">
                         {activity.user.username.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
@@ -392,10 +407,15 @@ export default function DashboardPage() {
                         <span className="font-semibold hover:text-primary transition-colors">{activity.user.username}</span>{' '}
                         {t.dashboard.completedWorkout}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatRelativeDate(activity.date)} •{' '}
-                        {activity.muscleGroups.map((mg) => getMuscleGroupLabel(mg as MuscleGroup)).join(' + ')}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
+                        <span>{formatRelativeDate(activity.date)} • {activity.muscleGroups.map((mg) => getMuscleGroupLabel(mg as MuscleGroup)).join(' + ')}</span>
+                        {activity.buddies && activity.buddies.length > 0 && (
+                          <span className="inline-flex items-center gap-1 font-medium text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.2 rounded text-[11px]">
+                            <span>🤝</span>
+                            <span>{activity.buddies.map((b) => b.username).join(', ')}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </Link>
                 ))}

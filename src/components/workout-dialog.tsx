@@ -4,14 +4,16 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { workoutSchema, MUSCLE_GROUPS, type MuscleGroup } from '@/lib/validations';
-import { useCreateWorkout, useUpdateWorkout, type Workout } from '@/lib/hooks';
-import { getTodayString } from '@/lib/utils';
+import { useCreateWorkout, useUpdateWorkout, useFriends, type Workout } from '@/lib/hooks';
+import { getTodayString, cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Users } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -35,8 +37,10 @@ interface WorkoutDialogProps {
 export function WorkoutDialog({ open, onOpenChange, workout, defaultDate, defaultMuscleGroups }: WorkoutDialogProps) {
   const createWorkout = useCreateWorkout();
   const updateWorkout = useUpdateWorkout();
-  const { t, getMuscleGroupLabel } = useLanguage();
+  const { data: friends } = useFriends();
+  const { t, getMuscleGroupLabel, locale } = useLanguage();
   const [error, setError] = useState('');
+  const [selectedBuddyIds, setSelectedBuddyIds] = useState<string[]>([]);
 
   const isEditing = !!workout;
 
@@ -59,12 +63,14 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate, defaul
           muscleGroups: workout.muscleGroups as MuscleGroup[],
           note: workout.note || '',
         });
+        setSelectedBuddyIds(workout.buddies?.map((b) => b.id) || []);
       } else {
         reset({
           date: defaultDate || getTodayString(),
           muscleGroups: defaultMuscleGroups || [],
           note: '',
         });
+        setSelectedBuddyIds([]);
       }
       setError('');
     }
@@ -82,10 +88,14 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate, defaul
   const onSubmit = async (data: WorkoutForm) => {
     setError('');
     try {
+      const payload = {
+        ...data,
+        buddyUserIds: selectedBuddyIds,
+      };
       if (isEditing && workout) {
-        await updateWorkout.mutateAsync({ id: workout.id, ...data });
+        await updateWorkout.mutateAsync({ id: workout.id, ...payload });
       } else {
-        await createWorkout.mutateAsync(data);
+        await createWorkout.mutateAsync(payload);
       }
       onOpenChange(false);
     } catch (err) {
@@ -141,6 +151,48 @@ export function WorkoutDialog({ open, onOpenChange, workout, defaultDate, defaul
               <p className="text-sm text-destructive">{errors.muscleGroups.message}</p>
             )}
           </div>
+
+          {/* Gym Buddy Selection */}
+          {friends && friends.length > 0 && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5 text-xs font-semibold">
+                <Users className="h-3.5 w-3.5 text-primary" />
+                {locale === 'tr' ? 'Antrenman Partneri (Gym Buddy 🤝)' : 'Workout Partner (Gym Buddy 🤝)'}
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {friends.map((friend) => {
+                  const isSelected = selectedBuddyIds.includes(friend.user.id);
+                  return (
+                    <button
+                      key={friend.user.id}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedBuddyIds(selectedBuddyIds.filter((id) => id !== friend.user.id));
+                        } else {
+                          setSelectedBuddyIds([...selectedBuddyIds, friend.user.id]);
+                        }
+                      }}
+                      className={cn(
+                        'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-medium transition-all',
+                        isSelected
+                          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                          : 'border-border bg-card hover:bg-accent text-muted-foreground'
+                      )}
+                    >
+                      <Avatar className="h-4 w-4">
+                        <AvatarFallback className="text-[9px]">
+                          {friend.user.username.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{friend.user.username}</span>
+                      {isSelected && <span className="text-[10px] font-bold">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="note">{t.workoutDialog.note}</Label>

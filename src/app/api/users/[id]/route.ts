@@ -68,6 +68,11 @@ export async function GET(
       muscleGroups: {
         select: { muscleGroup: true },
       },
+      buddies: {
+        include: {
+          user: { select: { id: true, username: true, avatarUrl: true } },
+        },
+      },
     },
     orderBy: { date: 'desc' },
   });
@@ -144,6 +149,7 @@ export async function GET(
     date: w.date,
     note: w.note,
     muscleGroups: w.muscleGroups.map((mg) => mg.muscleGroup),
+    buddies: w.buddies.map((b) => b.user),
   }));
 
   return NextResponse.json({

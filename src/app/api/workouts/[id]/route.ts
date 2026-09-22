@@ -16,6 +16,11 @@ export async function GET(
     where: { id },
     include: {
       muscleGroups: { select: { muscleGroup: true } },
+      buddies: {
+        include: {
+          user: { select: { id: true, username: true, avatarUrl: true } },
+        },
+      },
     },
   });
 
@@ -30,6 +35,7 @@ export async function GET(
   return NextResponse.json({
     ...workout,
     muscleGroups: workout.muscleGroups.map((mg) => mg.muscleGroup),
+    buddies: workout.buddies.map((b) => b.user),
   });
 }
 
@@ -63,10 +69,11 @@ export async function PUT(
       );
     }
 
-    const { date, muscleGroups, note } = parsed.data;
+    const { date, muscleGroups, note, buddyUserIds } = parsed.data;
 
-    // Delete old muscle groups and create new ones
+    // Delete old muscle groups and buddies
     await prisma.workoutMuscleGroup.deleteMany({ where: { workoutId: id } });
+    await prisma.workoutBuddy.deleteMany({ where: { workoutId: id } });
 
     const workout = await prisma.workout.update({
       where: { id },
@@ -76,15 +83,26 @@ export async function PUT(
         muscleGroups: {
           create: muscleGroups.map((mg) => ({ muscleGroup: mg })),
         },
+        ...(buddyUserIds && buddyUserIds.length > 0 && {
+          buddies: {
+            create: buddyUserIds.map((buddyId) => ({ userId: buddyId })),
+          },
+        }),
       },
       include: {
         muscleGroups: { select: { muscleGroup: true } },
+        buddies: {
+          include: {
+            user: { select: { id: true, username: true, avatarUrl: true } },
+          },
+        },
       },
     });
 
     return NextResponse.json({
       ...workout,
       muscleGroups: workout.muscleGroups.map((mg) => mg.muscleGroup),
+      buddies: workout.buddies.map((b) => b.user),
     });
   } catch (error) {
     console.error('Workout update error:', error);

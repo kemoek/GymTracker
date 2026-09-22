@@ -35,6 +35,11 @@ export async function GET() {
         select: { id: true, username: true, avatarUrl: true },
       },
       muscleGroups: { select: { muscleGroup: true } },
+      buddies: {
+        include: {
+          user: { select: { id: true, username: true, avatarUrl: true } },
+        },
+      },
     },
     orderBy: { date: 'desc' },
     take: 20,
@@ -45,6 +50,7 @@ export async function GET() {
     user: w.user,
     date: w.date,
     muscleGroups: w.muscleGroups.map((mg) => mg.muscleGroup),
+    buddies: w.buddies.map((b) => b.user),
   }));
 
   return NextResponse.json(result);

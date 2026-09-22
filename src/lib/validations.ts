@@ -58,6 +58,7 @@ export const workoutSchema = z.object({
     .array(z.enum(MUSCLE_GROUPS))
     .min(1, 'Select at least one muscle group'),
   note: z.string().max(500, 'Note must be at most 500 characters').optional(),
+  buddyUserIds: z.array(z.string()).optional(),
 });
 
 export const updateProfileSchema = z.object({
