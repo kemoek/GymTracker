@@ -356,24 +356,33 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {recentWorkouts.map((workout) => (
-                  <div key={workout.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 shrink-0 mt-0.5">
-                      <Dumbbell className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">
-                        {workout.muscleGroups.map((mg) => getMuscleGroupLabel(mg as MuscleGroup)).join(' + ')}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
-                        <span>{formatRelativeDate(workout.date)}</span>
-                        {workout.buddies && workout.buddies.length > 0 && (
-                          <span className="inline-flex items-center gap-1 font-medium text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.2 rounded text-[11px]">
-                            <span>🤝</span>
-                            <span>{workout.buddies.map((b) => b.username).join(', ')}</span>
-                          </span>
-                        )}
+                  <div key={workout.id} className="p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 shrink-0 mt-0.5">
+                        <Dumbbell className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">
+                          {workout.muscleGroups.map((mg) => getMuscleGroupLabel(mg as MuscleGroup)).join(' + ')}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
+                          <span>{formatRelativeDate(workout.date)}</span>
+                          {workout.buddies && workout.buddies.length > 0 && (
+                            <span className="inline-flex items-center gap-1 font-medium text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.2 rounded text-[11px]">
+                              <span>🤝</span>
+                              <span>{workout.buddies.map((b) => b.username).join(', ')}</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    <SocialInteractions
+                      workoutId={workout.id}
+                      initialFistBumpCount={workout.fistBumpCount || 0}
+                      initialHasFistBumped={workout.hasFistBumped || false}
+                      initialFistBumps={workout.fistBumps || []}
+                      initialCommentCount={workout.commentCount || 0}
+                    />
                   </div>
                 ))}
               </div>

@@ -83,6 +83,10 @@ export interface Workout {
   note: string | null;
   muscleGroups: string[];
   buddies?: WorkoutBuddyUser[];
+  fistBumps?: { id: string; username: string }[];
+  fistBumpCount?: number;
+  hasFistBumped?: boolean;
+  commentCount?: number;
   createdAt: string;
   updatedAt: string;
 }

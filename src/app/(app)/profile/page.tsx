@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { signOut } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useProfile, useUpdateProfile, useChangePassword, useUpdateGoal } from '@/lib/hooks';
+import { useProfile, useUpdateProfile, useChangePassword, useUpdateGoal, useWorkouts } from '@/lib/hooks';
+import { SocialInteractions } from '@/components/social-interactions';
 import { useLanguage, Locale } from '@/lib/i18n';
-import { updateProfileSchema, changePasswordSchema } from '@/lib/validations';
+import { updateProfileSchema, changePasswordSchema, type MuscleGroup } from '@/lib/validations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +24,8 @@ export default function ProfilePage() {
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
   const updateGoal = useUpdateGoal();
-  const { t, locale, setLocale } = useLanguage();
+  const { t, locale, setLocale, getMuscleGroupLabel, formatRelativeDate } = useLanguage();
+  const { data: recentWorkouts } = useWorkouts({ limit: 5 });
 
   const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
   const [passwordMsg, setPasswordMsg] = useState({ type: '', text: '' });
@@ -257,6 +259,73 @@ export default function ProfilePage() {
               {changePassword.isPending ? t.profile.saving : t.profile.changePassword}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Recent Workouts with Social Interactions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Dumbbell className="h-4 w-4" />
+            {locale === 'tr' ? 'Son Antrenmanlarım' : 'My Recent Workouts'}
+          </CardTitle>
+          <CardDescription>
+            {locale === 'tr'
+              ? 'Arkadaşlarının yaptığı 👊 ve 💬 burada görünür'
+              : 'See 👊 fist bumps and 💬 comments from friends'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!recentWorkouts || recentWorkouts.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              {locale === 'tr' ? 'Henüz antrenman yok.' : 'No workouts yet.'}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {recentWorkouts.map((workout) => (
+                <div key={workout.id} className="p-3.5 rounded-lg bg-muted/50 border border-border/40">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0 mt-0.5">
+                      <Dumbbell className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold">
+                          {workout.muscleGroups
+                            .map((mg) => getMuscleGroupLabel(mg as MuscleGroup))
+                            .join(' + ')}
+                        </p>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {formatRelativeDate(workout.date)}
+                        </span>
+                      </div>
+                      {workout.buddies && workout.buddies.length > 0 && (
+                        <p className="text-xs text-primary font-medium flex items-center gap-1 mt-1">
+                          <span>🤝</span>
+                          <span>
+                            {workout.buddies.map((b) => b.username).join(', ')}{' '}
+                            {locale === 'tr' ? 'ile birlikte' : 'with'}
+                          </span>
+                        </p>
+                      )}
+                      {workout.note && (
+                        <p className="text-xs text-muted-foreground mt-1 bg-background/50 rounded p-2 border border-border/20">
+                          💬 {workout.note}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <SocialInteractions
+                    workoutId={workout.id}
+                    initialFistBumpCount={workout.fistBumpCount || 0}
+                    initialHasFistBumped={workout.hasFistBumped || false}
+                    initialFistBumps={workout.fistBumps || []}
+                    initialCommentCount={workout.commentCount || 0}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
