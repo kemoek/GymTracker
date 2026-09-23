@@ -6,14 +6,15 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useProfile, useUpdateProfile, useChangePassword, useUpdateGoal, useWorkouts } from '@/lib/hooks';
 import { SocialInteractions } from '@/components/social-interactions';
-import { useLanguage, Locale } from '@/lib/i18n';
+import { useLanguage } from '@/lib/i18n';
 import { updateProfileSchema, changePasswordSchema, type MuscleGroup } from '@/lib/validations';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, Lock, Target, LogOut, Calendar, Dumbbell, Globe } from 'lucide-react';
+import { User, Lock, Target, LogOut, Calendar, Dumbbell, Globe, ChevronDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { z } from 'zod';
 
 type ProfileForm = z.infer<typeof updateProfileSchema>;
@@ -30,6 +31,8 @@ export default function ProfilePage() {
   const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
   const [passwordMsg, setPasswordMsg] = useState({ type: '', text: '' });
   const [goalValue, setGoalValue] = useState<number | null>(null);
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(updateProfileSchema),
@@ -44,6 +47,7 @@ export default function ProfilePage() {
     try {
       await updateProfile.mutateAsync(data);
       setProfileMsg({ type: 'success', text: t.profile.profileUpdated });
+      setEditingUsername(false);
     } catch (err) {
       setProfileMsg({ type: 'error', text: err instanceof Error ? err.message : t.auth.unexpectedError });
     }
@@ -55,14 +59,15 @@ export default function ProfilePage() {
       await changePassword.mutateAsync(data);
       setPasswordMsg({ type: 'success', text: t.profile.passwordChanged });
       passwordForm.reset();
+      setShowPasswordForm(false);
     } catch (err) {
       setPasswordMsg({ type: 'error', text: err instanceof Error ? err.message : t.auth.unexpectedError });
     }
   };
 
-  const handleGoalUpdate = async () => {
-    if (goalValue && goalValue >= 1 && goalValue <= 7) {
-      await updateGoal.mutateAsync(goalValue);
+  const handleGoalUpdate = async (val: number) => {
+    if (val >= 1 && val <= 7) {
+      await updateGoal.mutateAsync(val);
       setGoalValue(null);
     }
   };
@@ -75,243 +80,252 @@ export default function ProfilePage() {
     );
   }
 
+  const currentGoal = goalValue ?? profile?.weeklyGoal ?? 4;
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">{t.profile.title}</h1>
+    <div className="space-y-4 max-w-lg mx-auto">
+      {/* Profile Header */}
+      <div className="flex items-center gap-4 px-1">
+        <Avatar className="h-14 w-14">
+          <AvatarFallback className="text-lg font-bold">
+            {profile?.username?.slice(0, 2).toUpperCase() || '??'}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl font-bold truncate">{profile?.username}</h1>
+          <p className="text-sm text-muted-foreground truncate">{profile?.email}</p>
+          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {profile?.createdAt
+                ? new Date(profile.createdAt).toLocaleDateString(
+                    locale === 'tr' ? 'tr-TR' : 'en-US',
+                    { month: 'short', year: 'numeric' }
+                  )
+                : '—'}
+            </span>
+            <span className="flex items-center gap-1">
+              <Dumbbell className="h-3 w-3" />
+              {profile?.workoutCount || 0} {t.profile.workouts}
+            </span>
+          </div>
+        </div>
+      </div>
 
-      {/* Profile Overview */}
+      {/* Settings Card — compact rows */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="text-xl">
-                {profile?.username?.slice(0, 2).toUpperCase() || '??'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="text-xl font-bold">{profile?.username}</h2>
-              <p className="text-sm text-muted-foreground">{profile?.email}</p>
-              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3.5 w-3.5" />
-                  {t.profile.joined}{' '}
-                  {profile?.createdAt
-                    ? new Date(profile.createdAt).toLocaleDateString(
-                        locale === 'tr' ? 'tr-TR' : 'en-US',
-                        { month: 'long', year: 'numeric' }
-                      )
-                    : '—'}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Dumbbell className="h-3.5 w-3.5" />
-                  {profile?.workoutCount || 0} {t.profile.workouts}
-                </span>
-              </div>
+        <CardContent className="p-0 divide-y divide-border/50">
+          {/* Language */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2 text-sm">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <span>{t.profile.language}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setLocale('tr')}
+                className={cn(
+                  'px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
+                  locale === 'tr'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted'
+                )}
+              >
+                🇹🇷 TR
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocale('en')}
+                className={cn(
+                  'px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
+                  locale === 'en'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted'
+                )}
+              >
+                🇬🇧 EN
+              </button>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Language Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            {t.profile.language}
-          </CardTitle>
-          <CardDescription>{t.profile.languageDesc}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant={locale === 'tr' ? 'default' : 'outline'}
-              onClick={() => setLocale('tr')}
-              className="gap-2"
-            >
-              🇹🇷 Türkçe
-            </Button>
-            <Button
-              type="button"
-              variant={locale === 'en' ? 'default' : 'outline'}
-              onClick={() => setLocale('en')}
-              className="gap-2"
-            >
-              🇬🇧 English
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Edit Profile */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <User className="h-4 w-4" />
-            {t.profile.editProfile}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
-            {profileMsg.text && (
-              <div className={`rounded-lg p-3 text-sm ${profileMsg.type === 'success' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
-                {profileMsg.text}
+          {/* Username */}
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span>{t.profile.username}</span>
               </div>
+              {!editingUsername && (
+                <button
+                  type="button"
+                  onClick={() => setEditingUsername(true)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  {profile?.username}
+                </button>
+              )}
+            </div>
+            {editingUsername && (
+              <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="mt-2">
+                {profileMsg.text && (
+                  <p className={cn('text-xs mb-2', profileMsg.type === 'success' ? 'text-primary' : 'text-destructive')}>
+                    {profileMsg.text}
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <Input
+                    defaultValue={profile?.username}
+                    {...profileForm.register('username')}
+                    className="h-8 text-sm flex-1"
+                  />
+                  <Button type="submit" size="sm" className="h-8 px-3" disabled={updateProfile.isPending}>
+                    <Check className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 px-2 text-xs"
+                    onClick={() => { setEditingUsername(false); setProfileMsg({ type: '', text: '' }); }}
+                  >
+                    {locale === 'tr' ? 'İptal' : 'Cancel'}
+                  </Button>
+                </div>
+                {profileForm.formState.errors.username && (
+                  <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.username.message}</p>
+                )}
+              </form>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="username">{t.profile.username}</Label>
-              <Input
-                id="username"
-                defaultValue={profile?.username}
-                {...profileForm.register('username')}
-              />
-              {profileForm.formState.errors.username && (
-                <p className="text-sm text-destructive">{profileForm.formState.errors.username.message}</p>
-              )}
-            </div>
-            <Button type="submit" disabled={updateProfile.isPending}>
-              {updateProfile.isPending ? t.profile.saving : t.profile.saveChanges}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Weekly Goal */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            {t.profile.weeklyGoal}
-          </CardTitle>
-          <CardDescription>{t.profile.goalDescription}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3">
-            <Input
-              type="number"
-              min={1}
-              max={7}
-              value={goalValue ?? profile?.weeklyGoal ?? 4}
-              onChange={(e) => setGoalValue(parseInt(e.target.value))}
-              className="w-24"
-            />
-            <span className="text-sm text-muted-foreground">{t.profile.workoutsPerWeek}</span>
-            <Button
-              onClick={handleGoalUpdate}
-              disabled={updateGoal.isPending || goalValue === null}
-              size="sm"
-            >
-              {updateGoal.isPending ? t.profile.saving : t.profile.update}
-            </Button>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Change Password */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Lock className="h-4 w-4" />
-            {t.profile.changePassword}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-            {passwordMsg.text && (
-              <div className={`rounded-lg p-3 text-sm ${passwordMsg.type === 'success' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
-                {passwordMsg.text}
+          {/* Weekly Goal */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2 text-sm">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              <span>{t.profile.weeklyGoal}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => {
+                    setGoalValue(n);
+                    handleGoalUpdate(n);
+                  }}
+                  className={cn(
+                    'w-7 h-7 rounded-md text-xs font-semibold transition-colors',
+                    n === currentGoal
+                      ? 'bg-primary text-primary-foreground'
+                      : n <= currentGoal
+                        ? 'bg-primary/15 text-primary'
+                        : 'text-muted-foreground hover:bg-muted'
+                  )}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Change Password — collapsible */}
+          <div className="px-4 py-3">
+            <button
+              type="button"
+              onClick={() => setShowPasswordForm(!showPasswordForm)}
+              className="flex items-center justify-between w-full text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <span>{t.profile.changePassword}</span>
               </div>
+              <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', showPasswordForm && 'rotate-180')} />
+            </button>
+            {showPasswordForm && (
+              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="mt-3 space-y-3">
+                {passwordMsg.text && (
+                  <p className={cn('text-xs', passwordMsg.type === 'success' ? 'text-primary' : 'text-destructive')}>
+                    {passwordMsg.text}
+                  </p>
+                )}
+                <div className="space-y-1.5">
+                  <Label htmlFor="currentPassword" className="text-xs">{t.profile.currentPassword}</Label>
+                  <Input id="currentPassword" type="password" {...passwordForm.register('currentPassword')} className="h-8 text-sm" />
+                  {passwordForm.formState.errors.currentPassword && (
+                    <p className="text-xs text-destructive">{passwordForm.formState.errors.currentPassword.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="newPassword" className="text-xs">{t.profile.newPassword}</Label>
+                  <Input id="newPassword" type="password" {...passwordForm.register('newPassword')} className="h-8 text-sm" />
+                  {passwordForm.formState.errors.newPassword && (
+                    <p className="text-xs text-destructive">{passwordForm.formState.errors.newPassword.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirmNewPassword" className="text-xs">{t.profile.confirmNewPassword}</Label>
+                  <Input id="confirmNewPassword" type="password" {...passwordForm.register('confirmNewPassword')} className="h-8 text-sm" />
+                  {passwordForm.formState.errors.confirmNewPassword && (
+                    <p className="text-xs text-destructive">{passwordForm.formState.errors.confirmNewPassword.message}</p>
+                  )}
+                </div>
+                <Button type="submit" size="sm" className="h-8" disabled={changePassword.isPending}>
+                  {changePassword.isPending ? t.profile.saving : t.profile.changePassword}
+                </Button>
+              </form>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword">{t.profile.currentPassword}</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                {...passwordForm.register('currentPassword')}
-              />
-              {passwordForm.formState.errors.currentPassword && (
-                <p className="text-sm text-destructive">{passwordForm.formState.errors.currentPassword.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">{t.profile.newPassword}</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                {...passwordForm.register('newPassword')}
-              />
-              {passwordForm.formState.errors.newPassword && (
-                <p className="text-sm text-destructive">{passwordForm.formState.errors.newPassword.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmNewPassword">{t.profile.confirmNewPassword}</Label>
-              <Input
-                id="confirmNewPassword"
-                type="password"
-                {...passwordForm.register('confirmNewPassword')}
-              />
-              {passwordForm.formState.errors.confirmNewPassword && (
-                <p className="text-sm text-destructive">{passwordForm.formState.errors.confirmNewPassword.message}</p>
-              )}
-            </div>
-            <Button type="submit" disabled={changePassword.isPending}>
-              {changePassword.isPending ? t.profile.saving : t.profile.changePassword}
-            </Button>
-          </form>
+          </div>
+
+          {/* Sign Out */}
+          <div className="px-4 py-3">
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="flex items-center gap-2 text-sm text-destructive hover:underline"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>{t.profile.signOut}</span>
+            </button>
+          </div>
         </CardContent>
       </Card>
 
       {/* Recent Workouts with Social Interactions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Dumbbell className="h-4 w-4" />
-            {locale === 'tr' ? 'Son Antrenmanlarım' : 'My Recent Workouts'}
-          </CardTitle>
-          <CardDescription>
-            {locale === 'tr'
-              ? 'Arkadaşlarının yaptığı 👊 ve 💬 burada görünür'
-              : 'See 👊 fist bumps and 💬 comments from friends'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!recentWorkouts || recentWorkouts.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              {locale === 'tr' ? 'Henüz antrenman yok.' : 'No workouts yet.'}
-            </p>
-          ) : (
-            <div className="space-y-3">
+      {recentWorkouts && recentWorkouts.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+              <Dumbbell className="h-3.5 w-3.5" />
+              {locale === 'tr' ? 'Son Antrenmanlarım' : 'My Recent Workouts'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-2.5">
               {recentWorkouts.map((workout) => (
-                <div key={workout.id} className="p-3.5 rounded-lg bg-muted/50 border border-border/40">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0 mt-0.5">
-                      <Dumbbell className="h-5 w-5 text-primary" />
+                <div key={workout.id} className="p-3 rounded-lg bg-muted/50 border border-border/30">
+                  <div className="flex items-start gap-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 shrink-0 mt-0.5">
+                      <Dumbbell className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-semibold">
+                        <p className="text-sm font-medium">
                           {workout.muscleGroups
                             .map((mg) => getMuscleGroupLabel(mg as MuscleGroup))
                             .join(' + ')}
                         </p>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-[11px] text-muted-foreground whitespace-nowrap">
                           {formatRelativeDate(workout.date)}
                         </span>
                       </div>
                       {workout.buddies && workout.buddies.length > 0 && (
-                        <p className="text-xs text-primary font-medium flex items-center gap-1 mt-1">
-                          <span>🤝</span>
-                          <span>
-                            {workout.buddies.map((b) => b.username).join(', ')}{' '}
-                            {locale === 'tr' ? 'ile birlikte' : 'with'}
-                          </span>
+                        <p className="text-[11px] text-primary font-medium flex items-center gap-1 mt-0.5">
+                          🤝 {workout.buddies.map((b) => b.username).join(', ')}
                         </p>
                       )}
                       {workout.note && (
-                        <p className="text-xs text-muted-foreground mt-1 bg-background/50 rounded p-2 border border-border/20">
-                          💬 {workout.note}
-                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-1">💬 {workout.note}</p>
                       )}
                     </div>
                   </div>
@@ -325,23 +339,9 @@ export default function ProfilePage() {
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Sign Out */}
-      <Card>
-        <CardContent className="pt-6">
-          <Button
-            variant="outline"
-            onClick={() => signOut({ callbackUrl: '/login' })}
-            className="gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            {t.profile.signOut}
-          </Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
